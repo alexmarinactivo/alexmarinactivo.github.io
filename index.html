@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#05060a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Nassar en vivo</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;background:#05060a;color:#eef1f7;
+ font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+ -webkit-tap-highlight-color:transparent}
+#app{display:flex;flex-direction:column;height:100dvh}
+header{padding:14px 18px 10px;border-bottom:1px solid rgba(255,255,255,.08);
+ display:flex;align-items:center;gap:10px}
+.pulso{width:11px;height:11px;border-radius:50%;background:#4ade80;flex:none;animation:pulso 1.6s infinite}
+@keyframes pulso{0%{box-shadow:0 0 0 0 rgba(74,222,128,.6)}70%{box-shadow:0 0 0 9px rgba(74,222,128,0)}100%{box-shadow:0 0 0 0 rgba(74,222,128,0)}}
+header h1{font-size:17px;letter-spacing:1px}
+header small{display:block;font-size:11px;color:#8a93a6;font-weight:400}
+main{flex:1;overflow-y:auto;padding:16px 16px 90px;-webkit-overflow-scrolling:touch}
+.vista{display:none}.vista.on{display:block}
+.tarjeta{background:#0d1017;border:1px solid rgba(255,255,255,.09);border-radius:16px;padding:15px 16px;margin-bottom:14px}
+.tarjeta h2{font-size:12px;letter-spacing:1.5px;color:#8a93a6;margin-bottom:10px}
+#ahora{font-size:17px;line-height:1.45}
+.fila{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:15px}
+.fila:last-child{border-bottom:0}
+.fila .nm{flex:1}
+.fila .dt{display:block;font-size:12px;color:#8a93a6;margin-top:2px}
+.pill{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;flex:none}
+.pill.en_curso{background:rgba(255,167,38,.15);color:#FFA726}
+.pill.pendiente{background:rgba(138,147,166,.15);color:#8a93a6}
+.pill.activo{background:rgba(102,187,106,.15);color:#66BB6A}
+.pill.hecho{background:rgba(102,187,106,.15);color:#66BB6A}
+#ultimo li{list-style:none;font-size:14px;color:#c6cddc;padding:7px 0 7px 24px;position:relative}
+#ultimo li:before{content:"✓";position:absolute;left:2px;color:#4ade80;font-weight:700}
+#refresco{text-align:center;color:#5b6478;font-size:12px;margin-top:6px}
+#vista-cerebro{height:100%}
+#vista-cerebro iframe{width:100%;height:100%;border:0;border-radius:16px;background:#05060a}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:rgba(8,10,15,.96);
+ border-top:1px solid rgba(255,255,255,.08);padding:8px 8px calc(10px + env(safe-area-inset-bottom));z-index:10}
+nav button{flex:1;background:none;border:0;color:#8a93a6;font-size:13px;font-weight:600;padding:10px;border-radius:12px;cursor:pointer}
+nav button.on{color:#FFD54F;background:rgba(255,213,79,.1)}
+#onboard{padding:26px 20px;max-width:560px;margin:0 auto}
+#onboard h1{font-size:22px;color:#FFD54F;margin-bottom:12px}
+#onboard p{font-size:15px;line-height:1.6;color:#c6cddc;margin-bottom:14px}
+#onboard button{background:#FFD54F;color:#111;border:0;border-radius:14px;font-size:17px;font-weight:700;
+ padding:15px 20px;width:100%;margin:10px 0;cursor:pointer}
+#onboard button.sec{background:#1a1f2b;color:#eef1f7}
+#onboard textarea{width:100%;height:110px;background:#0d1017;color:#8a93a6;border:1px solid rgba(255,255,255,.12);
+ border-radius:12px;padding:12px;font-size:11px;font-family:monospace;word-break:break-all}
+#ob-p2,#ob-p3{display:none}
+.ok{color:#4ade80;font-weight:700}
+#aviso{background:rgba(255,167,38,.1);border:1px solid rgba(255,167,38,.35);border-radius:12px;
+ padding:12px 14px;font-size:14px;color:#FFA726;margin-bottom:14px;display:none}
+#error{display:none;text-align:center;color:#8a93a6;font-size:13px;padding:30px 10px}
+</style>
+</head>
+<body>
+<div id="app">
+ <!-- ONBOARDING -->
+ <div id="onboard" style="display:none">
+  <div id="ob-p1">
+   <h1>Tu llave privada</h1>
+   <p>Esta app va <b>cifrada</b>: solo este móvil podrá leerla. Genera tu <b>llave privada</b> (nunca sale de aquí) y pásale a Nassar la <b>pública</b>.</p>
+   <button id="b-gen">Generar mi llave privada</button>
+  </div>
+  <div id="ob-p2">
+   <h1>Pásale esto a Nassar</h1>
+   <p>Copia todo el texto y pégaselo en el chat.</p>
+   <textarea id="pubkey" readonly></textarea>
+   <button id="b-copiar" class="sec">Copiar llave pública</button>
+   <button id="b-listo">Ya se la pasé</button>
+  </div>
+  <div id="ob-p3">
+   <h1 class="ok">Cifrando…</h1>
+   <p id="ob-msg">Esperando a que Nassar cifre tus datos con tu llave.</p>
+   <button id="b-reintentar" class="sec">Reintentar</button>
+  </div>
+ </div>
+ <!-- APP -->
+ <div id="contenido" style="display:none;flex-direction:column;height:100%">
+ <header><span class="pulso"></span><h1>NASSAR EN VIVO<small id="act">—</small></h1></header>
+ <main>
+  <div id="vista-vivo" class="vista on">
+   <div id="aviso"></div>
+   <div class="tarjeta"><h2>AHORA MISMO</h2><div id="ahora">—</div></div>
+   <div class="tarjeta"><h2>MISIONES Y TRÁMITES</h2><div id="misiones"></div></div>
+   <div class="tarjeta"><h2>ÚLTIMO COMPLETADO</h2><ul id="ultimo"></ul></div>
+   <div id="refresco"></div><div id="error"></div>
+  </div>
+  <div id="vista-cerebro" class="vista"><iframe id="f-cerebro" src="cerebro.html" title="Cerebro 3D"></iframe></div>
+ </main>
+ <nav>
+  <button id="b-vivo" class="on">◉ En vivo</button>
+  <button id="b-cerebro">✦ Cerebro 3D</button>
+ </nav>
+ </div>
+</div>
+<script src="nassar-crypto.js"></script>
+<script>
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
+const $=id=>document.getElementById(id);
+const NOMBRE={en_curso:'EN CURSO',pendiente:'PENDIENTE',activo:'ACTIVO',hecho:'HECHO'};
+let ultimaOk=null, yaDentro=false;
+
+function ir(vivo){$('b-vivo').classList.toggle('on',vivo);$('b-cerebro').classList.toggle('on',!vivo);
+ $('vista-vivo').classList.toggle('on',vivo);$('vista-cerebro').classList.toggle('on',!vivo);}
+$('b-vivo').onclick=()=>ir(true); $('b-cerebro').onclick=()=>ir(false);
+
+function entrar(){
+  $('onboard').style.display='none';
+  const c=$('contenido'); c.style.display='flex'; yaDentro=true;
+  cargar();
+}
+async function cargar(){
+  const err=$('error'), aviso=$('aviso');
+  err.style.display='none'; aviso.style.display='none';
+  try{
+    const r=await fetch('data.enc.json?_='+Date.now(),{cache:'no-store'});
+    if(!r.ok) throw new Error('no-data');
+    const bundle=await r.json();
+    let data;
+    try{ data=await nassar_decrypt(bundle); }
+    catch(e){
+      if(e.message==='no-recip'){
+        aviso.textContent='Nassar aún no ha cifrado datos para tu llave. Avísale en el chat.';
+        aviso.style.display='block';
+      } else throw e;
+      return;
+    }
+    ultimaOk=Date.now();
+    $('ahora').textContent=data.ahora||'—';
+    $('misiones').innerHTML=(data.misiones||[]).map(m=>
+     `<div class="fila"><div class="nm">${m.nombre}<span class="dt">${m.detalle||''}</span></div>
+      <span class="pill ${m.estado}">${NOMBRE[m.estado]||m.estado}</span></div>`).join('');
+    $('ultimo').innerHTML=(data.ultimo||[]).map(u=>`<li>${u}</li>`).join('');
+    const f=new Date(data.actualizado);
+    $('act').textContent='actualizado '+f.toLocaleString('es-ES',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+    const fr=$('f-cerebro');
+    if(fr&&fr.contentWindow) fr.contentWindow.postMessage({type:'nassar-descs',descs:data.descs||{}},'*');
+  }catch(e){
+    err.textContent='No puedo actualizar ahora. Reabre la app con internet.';
+    err.style.display='block';
+  }
+  const hace=ultimaOk?Math.round((Date.now()-ultimaOk)/1000):null;
+  $('refresco').textContent=hace===null?'intentando conectar…':'revisado hace '+hace+' s · se actualiza solo';
+}
+
+/* onboarding */
+$('b-gen').onclick=async()=>{
+  try{
+    const {pub}=await nassar_getOrCreate();
+    $('pubkey').value=JSON.stringify(pub);
+    $('ob-p1').style.display='none'; $('ob-p2').style.display='block';
+  }catch(e){ alert('No se pudo generar la llave: '+e.message); }
+};
+$('b-copiar').onclick=async()=>{
+  const t=$('pubkey'); t.select();
+  try{ await navigator.clipboard.writeText(t.value); }catch(e){ document.execCommand('copy'); }
+};
+$('b-listo').onclick=()=>{ $('ob-p2').style.display='none'; $('ob-p3').style.display='block'; intentar(); };
+$('b-reintentar').onclick=intentar;
+async function intentar(){
+  $('ob-msg').textContent='Probando…';
+  try{
+    const r=await fetch('data.enc.json?_='+Date.now(),{cache:'no-store'});
+    if(!r.ok) throw 0;
+    await nassar_decrypt(await r.json());
+    entrar();
+  }catch(e){ $('ob-msg').textContent='Todavía no hay datos para tu llave. Pásale la llave pública a Nassar y reintenta.'; }
+}
+
+(async()=>{
+  const priv=await nassar_idbGet('priv');
+  if(priv){ entrar(); } else { $('onboard').style.display='block'; }
+})();
+setInterval(()=>{ if(yaDentro) cargar(); },60000);
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden&&yaDentro) cargar(); });
+</script>
+</body>
+</html>
