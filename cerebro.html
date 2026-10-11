@@ -43,6 +43,9 @@
   #tarjeta p { margin:0; font-size:14px; color:#aeb6c8; line-height:1.55; }
   #tarjeta .cerrar { position:absolute; top:8px; right:14px; color:#8a93a6; font-size:22px;
     cursor:pointer; padding:4px; }
+  #b-ver-mision{display:none;margin-top:12px;background:rgba(255,213,79,.14);
+    border:1px solid rgba(255,213,79,.5);color:#FFD54F;font-size:14px;font-weight:700;
+    padding:10px 16px;border-radius:12px;cursor:pointer}
   #ayuda { position:fixed; bottom:16px; left:0; right:0; text-align:center; color:#5b6478;
     font-size:12px; letter-spacing:1px; pointer-events:none; z-index:5;
     animation:aparicion 1.4s ease 1.6s both; }
@@ -59,11 +62,19 @@
 <div id="sombra-top"></div>
 <div id="titulo"><h1>EL CEREBRO <span class="dorado">·</span> NASSAR</h1><p>CENTRO DE MANDO · TODO LO ACTIVO, EN VIVO</p></div>
 <div id="leyenda"></div>
-<div id="tarjeta"><span class="cerrar" id="cerrar">×</span><h2 id="t-nombre"></h2><p id="t-desc"></p></div>
+<div id="tarjeta"><span class="cerrar" id="cerrar">×</span><h2 id="t-nombre"></h2><p id="t-desc"></p><button id="b-ver-mision">Ver en En vivo →</button></div>
 <div id="ayuda">Arrastra para girar · Pellizca o rueda para acercar · Toca un nodo</div>
 <div id="intro"></div>
 <div id="err3d"><div>No se pudo iniciar el 3D en este navegador.<br>Prueba con Chrome o Safari actualizado.</div></div>
 
+<script>
+// buzón para mensajes que lleguen antes de que el módulo 3D esté listo
+window.__nassarQ=[];
+addEventListener('message',function(e){
+  if(e.origin!==location.origin) return;
+  if(e.data&&e.data.type==='nassar-focus') window.__nassarQ.push(e.data);
+});
+</script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/OrbitControls.js';
@@ -496,17 +507,21 @@ function mostrar(n){
   document.getElementById('t-desc').textContent=n.userData.desc||'';
   document.getElementById('t-nombre').style.color=n.userData.color;
   tarjeta.style.display = n.userData.desc ? 'block':'none';
+  const mm=MAPA_NODO_MISION[n.userData.nombre];
+  if(mm){ bVerMision.style.display='inline-block';
+    bVerMision.onclick=()=>{ try{ parent.postMessage({type:'nassar-ver-mision',mision:mm},location.origin); }catch(e){} };
+  } else bVerMision.style.display='none';
 }
 document.getElementById('cerrar').onclick=()=>tarjeta.style.display='none';
 let px=0, py=0, movido=0;
-canvas.addEventListener('pointerdown',e=>{ px=e.clientX; py=e.clientY; movido=0; });
+canvas.addEventListener('pointerdown',e=>{ px=e.clientX; py=e.clientY; movido=0; if(!tween) controls.autoRotate=!reducido; });
 canvas.addEventListener('pointermove',e=>{ movido+=Math.abs(e.movementX||0)+Math.abs(e.movementY||0); });
 canvas.addEventListener('pointerup',e=>{
   if(movido<8){
     raton.x=(e.clientX/innerWidth)*2-1; raton.y=-(e.clientY/innerHeight)*2+1;
     ray.setFromCamera(raton,camera);
     const hit=ray.intersectObjects(nodosMalla)[0];
-    if(hit) mostrar(hit.object); else tarjeta.style.display='none';
+    if(hit) mostrar(hit.object); else { tarjeta.style.display='none'; limpiarFoco(); }
   }
 });
 
@@ -571,8 +586,16 @@ renderer.setAnimationLoop(()=>{
     const k=easeInOutCubic(introT);
     camera.position.lerpVectors(camStart, camEnd, k);
     camera.lookAt(0,2,0);
-    if(introT>=1) controls.enabled=true;
+    if(introT>=1){ controls.enabled=true;
+      if(focusPendiente){ const fp=focusPendiente; focusPendiente=null; enfocar(fp); } }
   } else if(!controls.enabled){ controls.enabled=true; }
+  if(tween){
+    tween.t+=dt/tween.dur;
+    const k=easeInOutCubic(Math.min(1,tween.t));
+    camera.position.lerpVectors(tween.fromP,tween.toP,k);
+    controls.target.lerpVectors(tween.fromT,tween.toT,k);
+    if(tween.t>=1) tween=null;
+  }
   controls.update();
   // aparición escalonada de nodos
   for(const n of nodosMalla){
@@ -580,7 +603,8 @@ renderer.setAnimationLoop(()=>{
     const s=easeOutBack(clamp01((t-u.nacimiento)/0.6));
     const sc=Math.max(0.0001, s);
     n.scale.setScalar(sc);
-    const hs=Math.max(0.0001, u.baseHalo*(u.state==='hot'?1.7:u.state==='dim'?0.75:1)*s);
+    const foc=(n===focoNodo)?2.1:1;
+    const hs=Math.max(0.0001, u.baseHalo*(u.state==='hot'?1.7:u.state==='dim'?0.75:1)*foc*s);
     u.halo.scale.set(hs,hs,1);
     if(u.etiqueta) u.etiqueta.material.opacity=clamp01((t-u.nacimiento-0.25)/0.5);
     if(u.etiqueta2) u.etiqueta2.material.opacity=clamp01((t-u.nacimiento-0.25)/0.5);
@@ -596,6 +620,43 @@ renderer.setAnimationLoop(()=>{
   if(primerFrame){ primerFrame=false;
     setTimeout(()=>{ document.getElementById('intro').style.opacity='0'; }, 350); }
 });
+
+// ================= FOCO PANEL <-> CEREBRO =================
+const MAPA_NODO_MISION={};
+for(const k in MAPA_MISIONES) MAPA_NODO_MISION[MAPA_MISIONES[k]]=k;
+const bVerMision=document.getElementById('b-ver-mision');
+let focoNodo=null, tween=null, focusPendiente=null;
+
+function limpiarFoco(){
+  const n=focoNodo; focoNodo=null;
+  if(!n||!n.userData._snap) return;
+  const s=n.userData._snap, u=n.userData;
+  u.uAmp.value=s.amp; u.uBright.value=s.bright; u.halo.material.opacity=s.hop;
+}
+function enfocar(nombreMision){
+  const nn=MAPA_MISIONES[nombreMision]||(nodosPorNombre[nombreMision]?nombreMision:null);
+  const n=nn?nodosPorNombre[nn]:null;
+  if(!n) return;
+  if(introT<1){ focusPendiente=nombreMision; return; }
+  limpiarFoco();
+  const u=n.userData;
+  u._snap={amp:u.uAmp.value, bright:u.uBright.value, hop:u.halo.material.opacity};
+  u.uAmp.value=0.5; u.uBright.value=2.6; u.halo.material.opacity=0.95;
+  focoNodo=n;
+  mostrar(n);
+  const dir=camera.position.clone().sub(controls.target).normalize();
+  tween={t:0,dur:1.15,
+    fromP:camera.position.clone(), toP:n.position.clone().add(dir.multiplyScalar(42)),
+    fromT:controls.target.clone(), toT:n.position.clone()};
+  controls.autoRotate=false;
+}
+addEventListener('message',e=>{
+  if(e.origin!==location.origin||!e.data) return;
+  if(e.data.type==='nassar-focus') enfocar(e.data.mision);
+});
+if(window.__nassarQ&&window.__nassarQ.length){
+  window.__nassarQ.splice(0).forEach(d=>{ try{enfocar(d.mision);}catch(e){} });
+}
 </script>
 </body>
 </html>
