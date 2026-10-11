@@ -4,6 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>La plataforma de Nassar Intelligence</title>
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three.webgpu.js",
+    "three/webgpu": "./vendor/three.webgpu.js",
+    "three/tsl": "./vendor/three.tsl.js",
+    "three/addons/": "./vendor/addons/"
+  }
+}
+</script>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   html,body { width:100%; height:100%; overflow:hidden; background:#05060a;
@@ -26,6 +36,8 @@
     cursor:pointer; padding:4px; }
   #ayuda { position:fixed; bottom:16px; left:0; right:0; text-align:center; color:#5b6478;
     font-size:12px; pointer-events:none; z-index:5; }
+  #err3d { position:fixed; inset:0; display:none; align-items:center; justify-content:center;
+    color:#8a93a6; font-size:14px; text-align:center; padding:30px; z-index:20; }
 </style>
 </head>
 <body>
@@ -34,10 +46,15 @@
 <div id="leyenda"></div>
 <div id="tarjeta"><span class="cerrar" id="cerrar">×</span><h2 id="t-nombre"></h2><p id="t-desc"></p></div>
 <div id="ayuda">Arrastra para girar · Pellizca o rueda para acercar</div>
+<div id="err3d"><div>No se pudo iniciar el 3D en este navegador.<br>Prueba con Chrome o Safari actualizado.</div></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script>
-// ---------- DATOS ----------
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/OrbitControls.js';
+import { pass, time, uniform, color, float, sin } from 'three/tsl';
+import { bloom } from 'three/addons/BloomNode.js';
+
+// ---------- DATOS (nombres exactos = claves del postMessage) ----------
 const GRUPOS = [
   { id:"misiones", nombre:"Misiones de dinero", color:"#66BB6A", nodos:[
     ["Producto nuevo","Detalle en la vista En vivo."],
@@ -68,10 +85,19 @@ const GRUPOS = [
 ];
 const CENTRO = { nombre:"CEREBRO", desc:"Nassar Intelligence: tu agente personal. Este cerebro alimenta a las 5 secciones y lo orquesta todo. Tú solo decides lo imprescindible.", color:"#FFD54F" };
 
-// ---------- ESCENA ----------
+// ---------- RENDERER (WebGPU con fallback automático a WebGL2) ----------
 const canvas = document.getElementById('c');
-const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+let renderer;
+try {
+  renderer = new THREE.WebGPURenderer({ canvas, antialias:true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  await renderer.init(); // obligatorio; si no hay WebGPU, usa el backend WebGL2 solo
+} catch(e) {
+  document.getElementById('err3d').style.display = 'flex';
+  throw e;
+}
+
+// ---------- ESCENA ----------
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x05060a);
 scene.fog = new THREE.FogExp2(0x05060a, 0.010);
@@ -80,6 +106,17 @@ camera.position.set(0, 10, 78);
 
 const mundo = new THREE.Group();
 scene.add(mundo);
+
+// ---------- MATERIAL TSL CON PULSO SUTIL ----------
+function materialPulso(hex, fase, amp){
+  const mat = new THREE.MeshBasicNodeMaterial();
+  const c = color(hex);
+  const ph = uniform(fase);
+  const a = float(amp);
+  // pulso: brillo oscila suavemente entre (1-amp) y 1
+  mat.colorNode = c.mul(float(1).sub(a).add(a.mul(float(0.5).add(float(0.5).mul(sin(time.mul(float(1.7)).add(ph)))))));
+  return mat;
+}
 
 function glowTex(){
   const c=document.createElement('canvas'); c.width=c.height=128;
@@ -92,7 +129,7 @@ function glowTex(){
 }
 const GLOW = glowTex();
 
-function etiqueta(texto, color, fs){
+function etiqueta(texto, colr, fs){
   const c=document.createElement('canvas'); const x=c.getContext('2d');
   x.font=`bold ${fs}px sans-serif`;
   const w=Math.ceil(x.measureText(texto).width)+40;
@@ -100,7 +137,7 @@ function etiqueta(texto, color, fs){
   const x2=c.getContext('2d');
   x2.font=`bold ${fs}px sans-serif`; x2.textBaseline='middle';
   x2.shadowColor='rgba(0,0,0,.9)'; x2.shadowBlur=10;
-  x2.fillStyle=color; x2.fillText(texto,20,c.height/2);
+  x2.fillStyle=colr; x2.fillText(texto,20,c.height/2);
   const t=new THREE.CanvasTexture(c);
   const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t, transparent:true, depthWrite:false}));
   const escala=0.045;
@@ -108,15 +145,17 @@ function etiqueta(texto, color, fs){
   return s;
 }
 
-const nodosMalla=[]; const lineasPts=[];
-function addNodo(nombre, desc, color, pos, radio, fsLabel){
-  const m=new THREE.Mesh(new THREE.SphereGeometry(radio,24,24), new THREE.MeshBasicMaterial({color}));
-  m.position.copy(pos); m.userData={nombre,desc,color};
+const nodosMalla=[]; const lineasPts=[]; const aristas=[];
+let faseNodo = 0;
+function addNodo(nombre, desc, colr, pos, radio, fsLabel, amp){
+  const m=new THREE.Mesh(new THREE.SphereGeometry(radio,24,24), materialPulso(colr, faseNodo, amp||0.16));
+  faseNodo += 1.37;
+  m.position.copy(pos); m.userData={nombre,desc,color:colr};
   mundo.add(m); nodosMalla.push(m);
-  const glow=new THREE.Sprite(new THREE.SpriteMaterial({map:GLOW,color,transparent:true,opacity:.55,depthWrite:false,blending:THREE.AdditiveBlending}));
+  const glow=new THREE.Sprite(new THREE.SpriteMaterial({map:GLOW,color:colr,transparent:true,opacity:.55,depthWrite:false,blending:THREE.AdditiveBlending}));
   glow.scale.set(radio*7,radio*7,1); glow.position.copy(pos); mundo.add(glow);
   if(fsLabel){
-    const lab=etiqueta(nombre,color,fsLabel);
+    const lab=etiqueta(nombre,colr,fsLabel);
     lab.position.copy(pos).add(new THREE.Vector3(0,radio+3.2,0));
     mundo.add(lab);
   }
@@ -125,7 +164,7 @@ function addNodo(nombre, desc, color, pos, radio, fsLabel){
 
 // --- cerebro central ---
 const centroPos = new THREE.Vector3(0,0,0);
-addNodo(CENTRO.nombre, CENTRO.desc, CENTRO.color, centroPos, 3.2, 52);
+addNodo(CENTRO.nombre, CENTRO.desc, CENTRO.color, centroPos, 3.2, 52, 0.22);
 
 // --- 5 secciones en anillo, como una plataforma ---
 const R = 34;
@@ -133,7 +172,6 @@ GRUPOS.forEach((g,i)=>{
   const ang = (i/GRUPOS.length)*Math.PI*2 - Math.PI/2;
   const hp = new THREE.Vector3(Math.cos(ang)*R, 0, Math.sin(ang)*R);
 
-  // plataforma de la sección: disco translúcido + anillo
   const disc = new THREE.Mesh(new THREE.CircleGeometry(14, 48),
     new THREE.MeshBasicMaterial({color:g.color, transparent:true, opacity:0.07, depthWrite:false}));
   disc.rotation.x = -Math.PI/2; disc.position.copy(hp).add(new THREE.Vector3(0,-7,0));
@@ -143,36 +181,56 @@ GRUPOS.forEach((g,i)=>{
   ring.rotation.x = -Math.PI/2; ring.position.copy(disc.position);
   mundo.add(ring);
 
-  // hub de la sección
-  const hub = addNodo(g.nombre, "Sección: "+g.nombre+". Toca sus nodos para ver cada pieza.", g.color, hp, 1.9, 44);
+  const hub = addNodo(g.nombre, "Sección: "+g.nombre+". Toca sus nodos para ver cada pieza.", g.color, hp, 1.9, 44, 0.18);
   lineasPts.push(centroPos.clone(), hp.clone());
+  aristas.push({a:hp.clone(), b:centroPos.clone()});
 
-  // cartel de sección flotante
   const cartel = etiqueta("SECCIÓN · "+g.nombre.toUpperCase(), g.color, 34);
   cartel.position.copy(hp).add(new THREE.Vector3(0, 12, 0));
   mundo.add(cartel);
 
-  // nodos de la sección alrededor del hub
   g.nodos.forEach(([nom,des],j)=>{
     const m=g.nodos.length, ph=Math.acos(1-2*(j+0.5)/m), th=Math.PI*(1+Math.sqrt(5))*j+1.3;
     const r2=9.5;
     const lp=hp.clone().add(new THREE.Vector3(r2*Math.sin(ph)*Math.cos(th), r2*Math.cos(ph)*0.75, r2*Math.sin(ph)*Math.sin(th)));
-    addNodo(nom,des,g.color,lp,1.0,32);
+    addNodo(nom,des,g.color,lp,1.0,32,0.14);
     lineasPts.push(hp.clone(), lp.clone());
+    aristas.push({a:lp.clone(), b:hp.clone()});
   });
 });
 const lg=new THREE.BufferGeometry().setFromPoints(lineasPts);
 mundo.add(new THREE.LineSegments(lg,new THREE.LineBasicMaterial({color:0x8a93a6,transparent:true,opacity:0.35})));
 
-// conexiones extra: el cerebro también alimenta directo a nodos clave
-// (líneas tenues centro -> cada hub ya incluidas)
+// --- partículas doradas viajando por las aristas hacia el centro ---
+const P_COUNT = 260;
+const pGeo = new THREE.BufferGeometry();
+const pPos = new Float32Array(P_COUNT*3);
+const parts = [];
+for(let i=0;i<P_COUNT;i++) parts.push({e:(Math.random()*aristas.length)|0, t:Math.random(), s:0.25+Math.random()*0.55});
+pGeo.setAttribute('position', new THREE.BufferAttribute(pPos,3));
+const pMat = new THREE.PointsMaterial({color:0xFFD54F, size:0.9, transparent:true, opacity:0.9, depthWrite:false, blending:THREE.AdditiveBlending});
+mundo.add(new THREE.Points(pGeo, pMat));
+const _v = new THREE.Vector3();
+function updateParticulas(dt){
+  for(let i=0;i<P_COUNT;i++){
+    const p=parts[i];
+    p.t += p.s*dt;
+    if(p.t>=1){ p.e=(Math.random()*aristas.length)|0; p.t=0; }
+    const E=aristas[p.e];
+    _v.copy(E.a).lerp(E.b, p.t);
+    pPos[i*3]=_v.x; pPos[i*3+1]=_v.y; pPos[i*3+2]=_v.z;
+  }
+  pGeo.attributes.position.needsUpdate = true;
+}
 
-// partículas doradas
+// --- polvo dorado ambiental ---
 (function(){
-  const N=400, pos=new Float32Array(N*3);
+  const N=350, pos=new Float32Array(N*3);
   for(let i=0;i<N;i++){ pos[i*3]=(Math.random()-0.5)*200; pos[i*3+1]=(Math.random()-0.5)*120; pos[i*3+2]=(Math.random()-0.5)*200; }
   const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(pos,3));
-  mundo.add(new THREE.Points(g,new THREE.PointsMaterial({color:0xFFD54F,size:0.4,transparent:true,opacity:0.45})));
+  const polvo=new THREE.Points(g,new THREE.PointsMaterial({color:0xFFD54F,size:0.4,transparent:true,opacity:0.45,depthWrite:false}));
+  polvo.name='polvo';
+  mundo.add(polvo);
 })();
 
 // leyenda
@@ -180,7 +238,27 @@ document.getElementById('leyenda').innerHTML =
   `<div><span class="dot" style="background:${CENTRO.color}"></span>Cerebro central</div>` +
   GRUPOS.map(g=>`<div><span class="dot" style="background:${g.color}"></span>${g.nombre}</div>`).join('');
 
-// ---------- INTERACCIÓN ----------
+// ---------- POSTPROCESADO ÉLITE: RenderPipeline + bloom ----------
+const renderPipeline = new THREE.RenderPipeline(renderer);
+const scenePass = pass(scene, camera);
+const scenePassColor = scenePass.getTextureNode('output');
+const bloomPass = bloom(scenePassColor, 0.55, 0.5, 0.6);
+renderPipeline.outputNode = scenePassColor.add(bloomPass);
+
+// ---------- CONTROLES ----------
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0,1,0);
+controls.enableDamping = true;
+controls.dampingFactor = 0.06;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 0.7;
+controls.minDistance = 38;
+controls.maxDistance = 140;
+controls.maxPolarAngle = Math.PI*0.72;
+controls.minPolarAngle = Math.PI*0.18;
+controls.update();
+
+// ---------- INTERACCIÓN: tocar nodo ----------
 const ray=new THREE.Raycaster(), raton=new THREE.Vector2();
 const tarjeta=document.getElementById('tarjeta');
 function mostrar(n){
@@ -191,41 +269,19 @@ function mostrar(n){
 }
 document.getElementById('cerrar').onclick=()=>tarjeta.style.display='none';
 
-let velX=0.0016, velY=0, arrastrando=false, px=0, py=0, movido=0;
-canvas.addEventListener('pointerdown',e=>{arrastrando=true;px=e.clientX;py=e.clientY;movido=0;});
-addEventListener('pointermove',e=>{
-  if(!arrastrando) return;
-  const dx=e.clientX-px, dy=e.clientY-py; movido+=Math.abs(dx)+Math.abs(dy);
-  velY=dx*0.00022; velX=dy*0.00012;
-  mundo.rotation.y+=dx*0.005; mundo.rotation.x+=dy*0.003;
-  mundo.rotation.x=Math.max(-0.9,Math.min(0.9,mundo.rotation.x));
-  px=e.clientX; py=e.clientY;
-});
-addEventListener('pointerup',e=>{
-  if(arrastrando && movido<8){
+let px=0, py=0, movido=0;
+canvas.addEventListener('pointerdown',e=>{px=e.clientX;py=e.clientY;movido=0;});
+canvas.addEventListener('pointermove',e=>{ movido+=Math.abs(e.movementX||0)+Math.abs(e.movementY||0); });
+canvas.addEventListener('pointerup',e=>{
+  if(movido<8){
     raton.x=(e.clientX/innerWidth)*2-1; raton.y=-(e.clientY/innerHeight)*2+1;
     ray.setFromCamera(raton,camera);
     const hit=ray.intersectObjects(nodosMalla)[0];
     if(hit) mostrar(hit.object); else tarjeta.style.display='none';
   }
-  arrastrando=false;
 });
-let dist=78;
-addEventListener('wheel',e=>{dist=Math.max(38,Math.min(140,dist+e.deltaY*0.05));},{passive:true});
-let pd=0;
-canvas.addEventListener('touchmove',e=>{
-  if(e.touches.length===2){
-    const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
-    if(pd) dist=Math.max(38,Math.min(140,dist-(d-pd)*0.15));
-    pd=d;
-  }
-},{passive:true});
-canvas.addEventListener('touchend',()=>pd=0);
 
-function resize(){ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); }
-addEventListener('resize',resize); resize();
-
-
+// ---------- DESCRIPCIONES DESDE LA APP (postMessage, nombres exactos) ----------
 addEventListener('message', e=>{
   if(e.data && e.data.type==='nassar-descs' && e.data.descs){
     nodosMalla.forEach(m=>{
@@ -234,15 +290,20 @@ addEventListener('message', e=>{
     });
   }
 });
-(function loop(){
-  requestAnimationFrame(loop);
-  if(!arrastrando){ mundo.rotation.y+=velX; mundo.rotation.x+=velY;
-    velY*=0.95; velX=velX*0.98+0.0016*0.02; }
-  const dir=new THREE.Vector3(0,0,1).applyQuaternion(camera.quaternion);
-  camera.position.copy(dir.multiplyScalar(dist)).add(new THREE.Vector3(0,8,0));
-  camera.lookAt(0,1,0);
-  renderer.render(scene,camera);
-})();
+
+// ---------- BUCLE ----------
+function resize(){ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); }
+addEventListener('resize',resize); resize();
+
+const clock = new THREE.Clock();
+renderer.setAnimationLoop(()=>{
+  const dt = Math.min(clock.getDelta(), 0.05);
+  controls.update();
+  updateParticulas(dt);
+  const polvo = mundo.getObjectByName('polvo');
+  if(polvo) polvo.rotation.y += dt*0.008;
+  renderPipeline.render();
+});
 </script>
 </body>
 </html>
