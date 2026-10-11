@@ -52,8 +52,20 @@ nav button.on{color:#FFD54F;background:rgba(255,213,79,.1)}
 #onboard button{background:#FFD54F;color:#111;border:0;border-radius:14px;font-size:17px;font-weight:700;
  padding:15px 20px;width:100%;margin:10px 0;cursor:pointer}
 #onboard button.sec{background:#1a1f2b;color:#eef1f7}
+#onboard button:disabled{opacity:.45}
 #onboard textarea{width:100%;height:110px;background:#0d1017;color:#8a93a6;border:1px solid rgba(255,255,255,.12);
  border-radius:12px;padding:12px;font-size:11px;font-family:monospace;word-break:break-all}
+.err-tec{display:none;margin-top:12px;font-size:11px;font-family:monospace;color:#ff9e99;
+ background:rgba(255,80,80,.07);border:1px solid rgba(255,80,80,.3);border-radius:10px;
+ padding:10px 12px;word-break:break-all;line-height:1.5}
+#ob-backup{display:none;margin-top:18px;background:#0d1017;border:1px solid rgba(255,167,38,.45);
+ border-radius:14px;padding:14px}
+#ob-backup h2{font-size:13px;color:#FFA726;letter-spacing:1px;margin-bottom:8px}
+#ob-backup p{font-size:13px;color:#c6cddc;margin-bottom:10px;line-height:1.55}
+#ob-backup .lbl{font-size:10px;color:#8a93a6;letter-spacing:1.5px;margin:12px 0 6px}
+#ob-backup textarea{height:96px}
+#ob-restore{display:none;margin-top:20px;border-top:1px solid rgba(255,255,255,.08);padding-top:16px}
+#ob-restore .lbl{font-size:10px;color:#8a93a6;letter-spacing:1.5px;margin-bottom:8px}
 #ob-p2,#ob-p3{display:none}
 .ok{color:#4ade80;font-weight:700}
 #aviso{background:rgba(255,167,38,.1);border:1px solid rgba(255,167,38,.35);border-radius:12px;
@@ -69,6 +81,13 @@ nav button.on{color:#FFD54F;background:rgba(255,213,79,.1)}
    <h1>Tu llave privada</h1>
    <p>Esta app va <b>cifrada</b>: solo este móvil podrá leerla. Genera tu <b>llave privada</b> (nunca sale de aquí) y pásale a Nassar la <b>pública</b>.</p>
    <button id="b-gen">Generar mi llave privada</button>
+   <div id="ob-err" class="err-tec"></div>
+   <div id="ob-restore">
+    <div class="lbl">¿YA TIENES UNA LLAVE GUARDADA? IMPÓRTALA</div>
+    <textarea id="imp-key1" placeholder='Pega aquí tu llave privada (texto JSON)'></textarea>
+    <button id="b-imp1" class="sec">Importar llave</button>
+    <div id="ob-err-imp1" class="err-tec"></div>
+   </div>
   </div>
   <div id="ob-p2">
    <h1>Pásale esto a Nassar</h1>
@@ -76,6 +95,17 @@ nav button.on{color:#FFD54F;background:rgba(255,213,79,.1)}
    <textarea id="pubkey" readonly></textarea>
    <button id="b-copiar" class="sec">Copiar llave pública</button>
    <button id="b-listo">Ya se la pasé</button>
+   <div id="ob-backup">
+    <h2>⚠ RESPALDO DE TU LLAVE</h2>
+    <p>Tu navegador no guarda la llave: cópiala en Bitwarden. La necesitarás al reabrir la app.</p>
+    <div class="lbl">LLAVE PRIVADA (NO LA COMPARTAS)</div>
+    <textarea id="privkey" readonly></textarea>
+    <button id="b-copiar-priv" class="sec">Copiar llave privada</button>
+    <div class="lbl">¿YA TIENES OTRA GUARDADA? IMPÓRTALA</div>
+    <textarea id="imp-key2" placeholder='Pega aquí tu llave privada (texto JSON)'></textarea>
+    <button id="b-imp2" class="sec">Importar llave</button>
+    <div id="ob-err-imp2" class="err-tec"></div>
+   </div>
   </div>
   <div id="ob-p3">
    <h1 class="ok">Cifrando…</h1>
@@ -153,12 +183,42 @@ async function cargar(){
 }
 
 /* onboarding */
+function obErrorTec(el,e,prefijo){
+  el.textContent=(prefijo||'No se pudo generar la llave. ')+(e&&e.name?e.name+': ':'')+((e&&e.message)||e||'error desconocido');
+  el.style.display='block';
+}
+async function nassar_ui_import(srcId,errId){
+  const err=$(errId); err.style.display='none';
+  let jwk;
+  try{ jwk=JSON.parse($(srcId).value.trim()); }
+  catch(e){ obErrorTec(err,e,'La llave no es un JSON válido. '); return; }
+  try{
+    const {pub}=await nassar_importPrivJwk(jwk);
+    $('pubkey').value=JSON.stringify(pub);
+    $(srcId).value='';
+    $('ob-p1').style.display='none'; $('ob-p2').style.display='block';
+  }catch(e){ obErrorTec(err,e,'No se pudo importar la llave. '); }
+}
 $('b-gen').onclick=async()=>{
+  const err=$('ob-err'); err.style.display='none';
+  const btn=$('b-gen'); btn.disabled=true;
   try{
     const {pub}=await nassar_getOrCreate();
     $('pubkey').value=JSON.stringify(pub);
+    if(!(await nassar_idbProbe())){
+      const pj=await nassar_exportPrivJwk();
+      $('privkey').value=JSON.stringify(pj);
+      $('ob-backup').style.display='block';
+    }
     $('ob-p1').style.display='none'; $('ob-p2').style.display='block';
-  }catch(e){ alert('No se pudo generar la llave: '+e.message); }
+  }catch(e){ obErrorTec(err,e); }
+  finally{ btn.disabled=false; }
+};
+$('b-imp1').onclick=()=>nassar_ui_import('imp-key1','ob-err-imp1');
+$('b-imp2').onclick=()=>nassar_ui_import('imp-key2','ob-err-imp2');
+$('b-copiar-priv').onclick=async()=>{
+  const t=$('privkey'); t.select();
+  try{ await navigator.clipboard.writeText(t.value); }catch(e){ document.execCommand('copy'); }
 };
 $('b-copiar').onclick=async()=>{
   const t=$('pubkey'); t.select();
@@ -178,7 +238,11 @@ async function intentar(){
 
 (async()=>{
   const priv=await nassar_idbGet('priv');
-  if(priv){ entrar(); } else { $('onboard').style.display='block'; }
+  if(priv){ entrar(); }
+  else{
+    $('onboard').style.display='block';
+    if(!(await nassar_idbProbe())){ $('ob-restore').style.display='block'; }
+  }
 })();
 setInterval(()=>{ if(yaDentro) cargar(); },60000);
 document.addEventListener('visibilitychange',()=>{ if(!document.hidden&&yaDentro) cargar(); });
