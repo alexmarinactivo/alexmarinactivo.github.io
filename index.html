@@ -173,7 +173,7 @@ async function cargar(){
     const f=new Date(data.actualizado);
     $('act').textContent='actualizado '+f.toLocaleString('es-ES',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
     const fr=$('f-cerebro');
-    if(fr&&fr.contentWindow) fr.contentWindow.postMessage({type:'nassar-descs',descs:data.descs||{}},'*');
+    if(fr&&fr.contentWindow){ fr.contentWindow.postMessage({type:'nassar-descs',descs:data.descs||{}},'*'); fr.contentWindow.postMessage({type:'nassar-misiones',misiones:data.misiones||[]},'*'); }
   }catch(e){
     err.textContent='No puedo actualizar ahora. Reabre la app con internet.';
     err.style.display='block';

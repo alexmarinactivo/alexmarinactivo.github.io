@@ -15,46 +15,62 @@
 }
 </script>
 <style>
-  * { margin:0; padding:0; box-sizing:border-box; }
-  html,body { width:100%; height:100%; overflow:hidden; background:#05060a;
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+  html,body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#04060c;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,sans-serif;
+    -webkit-tap-highlight-color:transparent; }
   #c { position:fixed; inset:0; display:block; touch-action:none; }
-  #titulo { position:fixed; top:14px; left:0; right:0; text-align:center; color:#fff;
-    pointer-events:none; z-index:5; }
-  #titulo h1 { font-size:19px; letter-spacing:1px; }
-  #titulo p { font-size:12px; color:#8a93a6; margin-top:4px; }
-  #leyenda { position:fixed; top:14px; left:14px; z-index:5; background:rgba(10,12,18,.72);
-    border:1px solid rgba(255,255,255,.12); border-radius:12px; padding:10px 12px;
-    color:#cfd6e4; font-size:12px; line-height:1.9; backdrop-filter:blur(6px); }
-  #leyenda .dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:8px; }
+  #vineta { position:fixed; inset:0; pointer-events:none; z-index:3;
+    background:radial-gradient(ellipse at 50% 42%, transparent 50%, rgba(1,2,8,.34) 80%, rgba(0,1,6,.68) 100%); }
+  #sombra-top { position:fixed; top:0; left:0; right:0; height:110px; pointer-events:none; z-index:3;
+    background:linear-gradient(rgba(2,3,8,.6), transparent); }
+  #titulo { position:fixed; top:16px; left:0; right:0; text-align:center; color:#fff;
+    pointer-events:none; z-index:5; animation:aparicion 1.4s ease .9s both; }
+  #titulo h1 { margin:0; font-size:20px; letter-spacing:4px; font-weight:700;
+    text-shadow:0 0 24px rgba(255,213,79,.35); }
+  #titulo h1 .dorado { color:#FFD54F; }
+  #titulo p { margin:6px 0 0; font-size:11px; letter-spacing:3px; color:#8a93a6; font-weight:500; }
+  #leyenda { position:fixed; top:16px; left:14px; z-index:5; background:rgba(8,11,20,.66);
+    border:1px solid rgba(140,180,255,.16); border-radius:12px; padding:10px 12px;
+    color:#cfd6e4; font-size:12px; line-height:1.9; backdrop-filter:blur(8px);
+    animation:aparicion 1.4s ease 1.2s both; }
+  #leyenda .dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:8px;
+    box-shadow:0 0 8px currentColor; }
   #tarjeta { position:fixed; left:14px; right:14px; bottom:16px; z-index:6; display:none;
-    background:rgba(12,14,22,.92); border:1px solid rgba(255,255,255,.15); border-radius:16px;
-    padding:16px 18px; color:#fff; backdrop-filter:blur(8px); }
-  #tarjeta h2 { font-size:18px; margin-bottom:6px; }
-  #tarjeta p { font-size:14px; color:#aeb6c8; line-height:1.5; }
+    background:rgba(8,11,20,.92); border:1px solid rgba(140,180,255,.22); border-radius:16px;
+    padding:16px 18px; color:#fff; backdrop-filter:blur(10px);
+    box-shadow:0 8px 40px rgba(0,0,0,.5); }
+  #tarjeta h2 { margin:0 0 6px; font-size:18px; letter-spacing:1px; }
+  #tarjeta p { margin:0; font-size:14px; color:#aeb6c8; line-height:1.55; }
   #tarjeta .cerrar { position:absolute; top:8px; right:14px; color:#8a93a6; font-size:22px;
     cursor:pointer; padding:4px; }
   #ayuda { position:fixed; bottom:16px; left:0; right:0; text-align:center; color:#5b6478;
-    font-size:12px; pointer-events:none; z-index:5; }
+    font-size:12px; letter-spacing:1px; pointer-events:none; z-index:5;
+    animation:aparicion 1.4s ease 1.6s both; }
+  #intro { position:fixed; inset:0; background:#04060c; z-index:40; pointer-events:none;
+    transition:opacity 1.8s ease; }
   #err3d { position:fixed; inset:0; display:none; align-items:center; justify-content:center;
     color:#8a93a6; font-size:14px; text-align:center; padding:30px; z-index:20; }
+  @keyframes aparicion { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
-<div id="titulo"><h1>EL CEREBRO · NASSAR</h1><p>El cerebro en el centro · 5 secciones · Toca un nodo</p></div>
+<div id="vineta"></div>
+<div id="sombra-top"></div>
+<div id="titulo"><h1>EL CEREBRO <span class="dorado">·</span> NASSAR</h1><p>CENTRO DE MANDO · TODO LO ACTIVO, EN VIVO</p></div>
 <div id="leyenda"></div>
 <div id="tarjeta"><span class="cerrar" id="cerrar">×</span><h2 id="t-nombre"></h2><p id="t-desc"></p></div>
-<div id="ayuda">Arrastra para girar · Pellizca o rueda para acercar</div>
+<div id="ayuda">Arrastra para girar · Pellizca o rueda para acercar · Toca un nodo</div>
+<div id="intro"></div>
 <div id="err3d"><div>No se pudo iniciar el 3D en este navegador.<br>Prueba con Chrome o Safari actualizado.</div></div>
 
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/OrbitControls.js';
-import { pass, time, uniform, color, float, sin } from 'three/tsl';
+import { pass, time, uniform, color, float, sin, uv, attribute, smoothstep, fract } from 'three/tsl';
 import { bloom } from 'three/addons/BloomNode.js';
 
-// ---------- DATOS (nombres exactos = claves del postMessage) ----------
+// ================= DATOS (nombres exactos = claves del postMessage) =================
 const GRUPOS = [
   { id:"misiones", nombre:"Misiones de dinero", color:"#66BB6A", nodos:[
     ["Producto nuevo","Detalle en la vista En vivo."],
@@ -85,180 +101,394 @@ const GRUPOS = [
 ];
 const CENTRO = { nombre:"CEREBRO", desc:"Nassar Intelligence: tu agente personal. Este cerebro alimenta a las 5 secciones y lo orquesta todo. Tú solo decides lo imprescindible.", color:"#FFD54F" };
 
-// ---------- RENDERER (WebGPU con fallback automático a WebGL2) ----------
+// Cross-links con razón semántica real (según data.json):
+// El Consejo debate las decisiones importantes -> el producto (misión principal) y las misiones de dinero
+// Radar IA caza herramientas -> la Bóveda las guarda -> el Laboratorio las prueba
+// La Memoria alimenta al CEREBRO · El Navegador opera webs para la Investigación
+// La Privacidad rige cómo navego por ti y protege a la Familia · Vinted genera ingresos -> Finanzas
+// La Dieta de información (reviso y resumo) es Investigación
+const CROSS = [
+  ["El Consejo","Producto nuevo"],
+  ["El Consejo","Misiones de dinero"],
+  ["Radar IA","Bóveda"],
+  ["Bóveda","Laboratorio"],
+  ["Memoria","CEREBRO"],
+  ["Navegador","Investigación"],
+  ["Privacidad","Navegador"],
+  ["Vinted","Finanzas"],
+  ["Familia","Privacidad"],
+  ["Dieta de información","Investigación"],
+];
+// Misiones (index.html) -> nodo que las representa
+const MAPA_MISIONES = {
+  "Misión ganancias":"Producto nuevo",
+  "Canje permiso marroquí":"Canje permiso",
+  "Privacidad total":"Privacidad",
+  "Cita INSS Villena":"Cita INSS",
+  "Vuelo Tánger → Valencia":"Vuelo",
+  "El Consejo":"El Consejo"
+};
+
+// ================= RENDERER =================
 const canvas = document.getElementById('c');
+const reducido = matchMedia('(prefers-reduced-motion: reduce)').matches;
 let renderer;
 try {
   renderer = new THREE.WebGPURenderer({ canvas, antialias:true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  await renderer.init(); // obligatorio; si no hay WebGPU, usa el backend WebGL2 solo
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); // presupuesto móvil
+  renderer.toneMapping = THREE.ACESFilmicToneMapping; // el truco de color de estudio
+  await renderer.init();
 } catch(e) {
   document.getElementById('err3d').style.display = 'flex';
   throw e;
 }
 
-// ---------- ESCENA ----------
+// ================= ESCENA / CÁMARA =================
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x05060a);
-scene.fog = new THREE.FogExp2(0x05060a, 0.010);
-const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 600);
-camera.position.set(0, 10, 78);
+scene.background = new THREE.Color(0x04060c); // negro azulado, nunca puro
+scene.fog = new THREE.FogExp2(0x04060c, 0.0072);
+const camera = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 0.1, 700);
+const camStart = new THREE.Vector3(0, 62, 168);
+const camEnd = new THREE.Vector3(0, 13, 84);
+camera.position.copy(reducido ? camEnd : camStart);
+camera.lookAt(0, 2, 0);
 
-const mundo = new THREE.Group();
-scene.add(mundo);
+// ================= HELPERS =================
+const easeInOutCubic = t => t<.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
+const easeOutBack = t => { const c1=1.70158, c3=c1+1; return 1 + c3*Math.pow(t-1,3) + c1*Math.pow(t-1,2); };
+const clamp01 = t => Math.max(0, Math.min(1, t));
+function hexRgb(hex){ const n=parseInt(hex.slice(1),16); return [((n>>16)&255)/255, ((n>>8)&255)/255, (n&255)/255]; }
+function rr(x,px,py,w,h,r){ x.beginPath(); x.moveTo(px+r,py); x.arcTo(px+w,py,px+w,py+h,r); x.arcTo(px+w,py+h,px,py+h,r); x.arcTo(px,py+h,px,py,r); x.arcTo(px,py,px+w,py,r); x.closePath(); }
 
-// ---------- MATERIAL TSL CON PULSO SUTIL ----------
-function materialPulso(hex, fase, amp){
-  const mat = new THREE.MeshBasicNodeMaterial();
-  const c = color(hex);
-  const ph = uniform(fase);
-  const a = float(amp);
-  // pulso: brillo oscila suavemente entre (1-amp) y 1
-  mat.colorNode = c.mul(float(1).sub(a).add(a.mul(float(0.5).add(float(0.5).mul(sin(time.mul(float(1.7)).add(ph)))))));
-  return mat;
-}
-
+// ================= TEXTURAS PROCEDURALES =================
 function glowTex(){
   const c=document.createElement('canvas'); c.width=c.height=128;
   const x=c.getContext('2d');
   const g=x.createRadialGradient(64,64,0,64,64,64);
-  g.addColorStop(0,'rgba(255,255,255,1)'); g.addColorStop(0.35,'rgba(255,255,255,.45)');
-  g.addColorStop(1,'rgba(255,255,255,0)');
+  g.addColorStop(0,'rgba(255,255,255,1)'); g.addColorStop(0.25,'rgba(255,255,255,.55)');
+  g.addColorStop(0.55,'rgba(255,255,255,.14)'); g.addColorStop(1,'rgba(255,255,255,0)');
   x.fillStyle=g; x.fillRect(0,0,128,128);
   return new THREE.CanvasTexture(c);
 }
 const GLOW = glowTex();
 
-function etiqueta(texto, colr, fs){
-  const c=document.createElement('canvas'); const x=c.getContext('2d');
-  x.font=`bold ${fs}px sans-serif`;
-  const w=Math.ceil(x.measureText(texto).width)+40;
-  c.width=w; c.height=fs+44;
-  const x2=c.getContext('2d');
-  x2.font=`bold ${fs}px sans-serif`; x2.textBaseline='middle';
-  x2.shadowColor='rgba(0,0,0,.9)'; x2.shadowBlur=10;
-  x2.fillStyle=colr; x2.fillText(texto,20,c.height/2);
-  const t=new THREE.CanvasTexture(c);
-  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t, transparent:true, depthWrite:false}));
-  const escala=0.045;
-  s.scale.set(c.width*escala, c.height*escala, 1);
+function nebulaTex(){
+  const c=document.createElement('canvas'); c.width=1024; c.height=512;
+  const x=c.getContext('2d');
+  x.fillStyle='#04060c'; x.fillRect(0,0,1024,512);
+  const tonos=['10,22,51','26,16,51','10,42,51','20,14,44','8,30,58'];
+  for(let i=0;i<46;i++){
+    const px=Math.random()*1024, py=Math.random()*512, r=90+Math.random()*220;
+    const g=x.createRadialGradient(px,py,0,px,py,r);
+    const t=tonos[(Math.random()*tonos.length)|0];
+    g.addColorStop(0,`rgba(${t},${0.10+Math.random()*0.10})`);
+    g.addColorStop(1,`rgba(${t},0)`);
+    x.fillStyle=g; x.beginPath(); x.arc(px,py,r,0,7); x.fill();
+  }
+  // unas vetas doradas/cian muy tenues, casi subliminales
+  for(let i=0;i<10;i++){
+    const px=Math.random()*1024, py=Math.random()*512, r=40+Math.random()*90;
+    const g=x.createRadialGradient(px,py,0,px,py,r);
+    const col = Math.random()<0.5 ? '255,213,79' : '77,208,225';
+    g.addColorStop(0,`rgba(${col},0.05)`); g.addColorStop(1,`rgba(${col},0)`);
+    x.fillStyle=g; x.beginPath(); x.arc(px,py,r,0,7); x.fill();
+  }
+  const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; return t;
+}
+
+function gridTex(){
+  const S=1024, c=document.createElement('canvas'); c.width=c.height=S;
+  const x=c.getContext('2d'); const cx=S/2, cy=S/2;
+  x.strokeStyle='rgba(120,200,255,0.55)'; x.lineWidth=1.4;
+  for(let r=64;r<=512;r+=64){ x.beginPath(); x.arc(cx,cy,r,0,7); x.stroke(); }
+  for(let i=0;i<24;i++){ const a=i/24*Math.PI*2;
+    x.beginPath(); x.moveTo(cx+Math.cos(a)*64, cy+Math.sin(a)*64);
+    x.lineTo(cx+Math.cos(a)*512, cy+Math.sin(a)*512); x.stroke(); }
+  // ticks exteriores
+  x.lineWidth=3;
+  for(let i=0;i<72;i++){ const a=i/72*Math.PI*2;
+    x.beginPath(); x.moveTo(cx+Math.cos(a)*492, cy+Math.sin(a)*492);
+    x.lineTo(cx+Math.cos(a)*512, cy+Math.sin(a)*512); x.stroke(); }
+  // fundido radial
+  x.globalCompositeOperation='destination-in';
+  const g=x.createRadialGradient(cx,cy,0,cx,cy,512);
+  g.addColorStop(0,'rgba(0,0,0,0.9)'); g.addColorStop(0.55,'rgba(0,0,0,0.55)'); g.addColorStop(1,'rgba(0,0,0,0)');
+  x.fillStyle=g; x.fillRect(0,0,S,S);
+  return new THREE.CanvasTexture(c);
+}
+
+function shaftTex(){
+  const c=document.createElement('canvas'); c.width=64; c.height=256;
+  const x=c.getContext('2d');
+  const g=x.createLinearGradient(0,0,0,256);
+  g.addColorStop(0,'rgba(255,240,200,0)'); g.addColorStop(0.45,'rgba(255,240,200,0.55)');
+  g.addColorStop(0.62,'rgba(255,240,200,0.28)'); g.addColorStop(1,'rgba(255,240,200,0)');
+  x.fillStyle=g; x.fillRect(0,0,64,256);
+  return new THREE.CanvasTexture(c);
+}
+
+// ================= FONDO: nebulosa, estrellas, retícula, haz =================
+const nebulosa = new THREE.Mesh(
+  new THREE.SphereGeometry(300, 32, 32),
+  new THREE.MeshBasicMaterial({ map:nebulaTex(), side:THREE.BackSide, fog:false, depthWrite:false })
+);
+scene.add(nebulosa);
+
+function capaEstrellas(n, rMin, rMax, tam, op){
+  const pos=new Float32Array(n*3), col=new Float32Array(n*3);
+  for(let i=0;i<n;i++){
+    const r=rMin+Math.random()*(rMax-rMin);
+    const th=Math.random()*Math.PI*2, ph=Math.acos(2*Math.random()-1);
+    pos[i*3]=r*Math.sin(ph)*Math.cos(th); pos[i*3+1]=r*Math.cos(ph)*0.7; pos[i*3+2]=r*Math.sin(ph)*Math.sin(th);
+    const t=Math.random(); // blanco / azulado / dorado tenue
+    const cc = t<0.6 ? [1,1,1] : (t<0.85 ? [0.7,0.85,1] : [1,0.9,0.7]);
+    const b=0.35+Math.random()*0.65;
+    col[i*3]=cc[0]*b; col[i*3+1]=cc[1]*b; col[i*3+2]=cc[2]*b;
+  }
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos,3));
+  g.setAttribute('color', new THREE.BufferAttribute(col,3));
+  const p=new THREE.Points(g, new THREE.PointsMaterial({ size:tam, vertexColors:true, transparent:true,
+    opacity:op, depthWrite:false, fog:false, sizeAttenuation:true }));
+  scene.add(p); return p;
+}
+const estrellas1 = capaEstrellas(650, 200, 280, 1.5, 0.85);
+const estrellas2 = capaEstrellas(280, 150, 200, 2.4, 0.7);
+
+const reticula = new THREE.Mesh(
+  new THREE.CircleGeometry(100, 72),
+  new THREE.MeshBasicMaterial({ map:gridTex(), transparent:true, opacity:0.17,
+    blending:THREE.AdditiveBlending, depthWrite:false, fog:false, color:0x9fd4ff })
+);
+reticula.rotation.x = -Math.PI/2; reticula.position.y = -10;
+scene.add(reticula);
+
+const haz = new THREE.Mesh(
+  new THREE.CylinderGeometry(3.2, 5.2, 64, 20, 1, true),
+  new THREE.MeshBasicMaterial({ map:shaftTex(), transparent:true, opacity:0.08,
+    blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide, fog:false })
+);
+haz.position.y = 12;
+scene.add(haz);
+
+// Anillos de planetario alrededor del conjunto
+function anilloPlanetario(radio, tubo, colr, op, tiltX, tiltZ){
+  const m=new THREE.Mesh(new THREE.TorusGeometry(radio, tubo, 8, 200),
+    new THREE.MeshBasicMaterial({ color:colr, transparent:true, opacity:op, fog:false, depthWrite:false }));
+  const g=new THREE.Group(); g.add(m); g.rotation.x=tiltX; g.rotation.z=tiltZ;
+  scene.add(g); return g;
+}
+const anilloP1 = anilloPlanetario(60, 0.07, 0xFFD54F, 0.30, 1.15, 0.12);
+const anilloP2 = anilloPlanetario(72, 0.05, 0x4DD0E1, 0.18, 1.30, -0.28);
+
+// ================= MATERIALES TSL =================
+function materialNodo(hex){
+  const mat = new THREE.MeshBasicNodeMaterial();
+  const uAmp = uniform(0.16), uBright = uniform(1.55), uPhase = uniform(Math.random()*6.28);
+  mat.colorNode = color(hex).mul(uBright).mul(
+    float(1).sub(uAmp).add(uAmp.mul(float(0.5).add(float(0.5).mul(sin(time.mul(float(1.6)).add(uPhase))))))
+  );
+  mat.userData = { uAmp, uBright };
+  return mat;
+}
+// Tubo de flujo de datos: estelas luminosas que viajan por la arista
+function materialFlujo({ conTinte, colorBase, velocidad, anchoCabeza, base, pico, brillo }){
+  const mat = new THREE.MeshBasicNodeMaterial();
+  mat.transparent = true; mat.blending = THREE.AdditiveBlending;
+  mat.depthWrite = false; mat.fog = false;
+  const d = fract(uv().x.sub(time.mul(float(velocidad))).add(attribute('aPhase')));
+  const cabeza = float(1).sub(smoothstep(float(0), float(anchoCabeza), d));
+  const resplandor = float(base).add(float(pico).mul(cabeza));
+  const tinta = conTinte ? attribute('aTint') : color(colorBase);
+  mat.colorNode = tinta.mul(resplandor).mul(float(brillo));
+  return mat;
+}
+
+// ================= NODOS =================
+const POS = {};
+const nodosMalla = [];
+const nodosPorNombre = {};
+let ordenNacimiento = 0;
+
+function etiqueta(texto, colr, fs, grande){
+  const c=document.createElement('canvas');
+  let x=c.getContext('2d');
+  const font=`600 ${fs}px -apple-system,"SF Pro Display","Segoe UI",Roboto,sans-serif`;
+  x.font=font;
+  try{ x.letterSpacing = grande ? '5px' : '3px'; }catch(e){}
+  const tw=x.measureText(texto).width;
+  const padX=24, padY=15;
+  c.width=Math.ceil(tw+padX*2); c.height=fs+padY*2;
+  x=c.getContext('2d');
+  const r=c.height/2;
+  x.fillStyle='rgba(5,8,16,0.60)'; x.strokeStyle='rgba(150,190,255,0.20)'; x.lineWidth=2;
+  rr(x,2,2,c.width-4,c.height-4,r-2); x.fill(); x.stroke();
+  x.font=font;
+  try{ x.letterSpacing = grande ? '5px' : '3px'; }catch(e){}
+  x.textBaseline='middle'; x.fillStyle=colr;
+  x.shadowColor='rgba(0,0,0,0.9)'; x.shadowBlur=8;
+  x.fillText(texto, padX, c.height/2+2);
+  const t=new THREE.CanvasTexture(c); t.anisotropy=4; t.colorSpace=THREE.SRGBColorSpace;
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({ map:t, transparent:true, depthWrite:false, fog:false }));
+  const k=0.052;
+  s.scale.set(c.width*k, c.height*k, 1);
+  s.renderOrder=5;
   return s;
 }
 
-const nodosMalla=[]; const lineasPts=[]; const aristas=[];
-let faseNodo = 0;
-function addNodo(nombre, desc, colr, pos, radio, fsLabel, amp){
-  const m=new THREE.Mesh(new THREE.SphereGeometry(radio,24,24), materialPulso(colr, faseNodo, amp||0.16));
-  faseNodo += 1.37;
-  m.position.copy(pos); m.userData={nombre,desc,color:colr};
-  mundo.add(m); nodosMalla.push(m);
-  const glow=new THREE.Sprite(new THREE.SpriteMaterial({map:GLOW,color:colr,transparent:true,opacity:.55,depthWrite:false,blending:THREE.AdditiveBlending}));
-  glow.scale.set(radio*7,radio*7,1); glow.position.copy(pos); mundo.add(glow);
+function addNodo(nombre, desc, colr, pos, radio, fsLabel, grande, nacimiento){
+  const mat = materialNodo(colr);
+  const m = new THREE.Mesh(new THREE.SphereGeometry(radio, 28, 28), mat);
+  m.position.copy(pos);
+  const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map:GLOW, color:colr, transparent:true,
+    opacity:0.5, depthWrite:false, fog:false, blending:THREE.AdditiveBlending }));
+  const baseHalo = radio*8.5;
+  halo.scale.set(baseHalo, baseHalo, 1);
+  halo.position.copy(pos); halo.renderOrder=4;
+  scene.add(halo);
+  m.userData = { nombre, desc, color:colr, halo, baseHalo,
+    uAmp:mat.userData.uAmp, uBright:mat.userData.uBright,
+    state:'normal', nacimiento, etiqueta:null };
+  scene.add(m); nodosMalla.push(m); nodosPorNombre[nombre]=m;
+  POS[nombre]=pos.clone();
   if(fsLabel){
-    const lab=etiqueta(nombre,colr,fsLabel);
-    lab.position.copy(pos).add(new THREE.Vector3(0,radio+3.2,0));
-    mundo.add(lab);
+    const lab=etiqueta(nombre, '#f2f6ff', fsLabel, grande);
+    lab.position.copy(pos).add(new THREE.Vector3(0, radio+4.4, 0));
+    lab.material.opacity=0;
+    scene.add(lab);
+    m.userData.etiqueta=lab;
   }
+  m.scale.setScalar(0.0001);
+  halo.scale.set(0.0001,0.0001,1);
   return m;
 }
 
 // --- cerebro central ---
 const centroPos = new THREE.Vector3(0,0,0);
-addNodo(CENTRO.nombre, CENTRO.desc, CENTRO.color, centroPos, 3.2, 52, 0.22);
+addNodo(CENTRO.nombre, CENTRO.desc, CENTRO.color, centroPos, 3.4, 54, true, 0.5);
+nodosPorNombre["CEREBRO"].userData.uBright.value = 1.9;
+// anillos orbitales del núcleo
+const anillosNucleo = [];
+[[5.6,0xFFD54F,0.55,0.5,0.2],[7.2,0xFFE9B0,0.32,0.9,-0.35]].forEach(([r,co,op,tx,tz],i)=>{
+  const an=new THREE.Mesh(new THREE.TorusGeometry(r,0.055,8,140),
+    new THREE.MeshBasicMaterial({ color:co, transparent:true, opacity:op, fog:false, depthWrite:false }));
+  const g=new THREE.Group(); g.add(an); g.rotation.x=tx; g.rotation.z=tz; g.position.copy(centroPos);
+  g.userData.vel = i===0 ? 0.25 : -0.18;
+  scene.add(g); anillosNucleo.push(g);
+});
 
-// --- 5 secciones en anillo, como una plataforma ---
+// --- 5 secciones en anillo ---
 const R = 34;
+const anillosHub = [];
 GRUPOS.forEach((g,i)=>{
-  const ang = (i/GRUPOS.length)*Math.PI*2 - Math.PI/2;
-  const hp = new THREE.Vector3(Math.cos(ang)*R, 0, Math.sin(ang)*R);
+  const ang=(i/GRUPOS.length)*Math.PI*2 - Math.PI/2;
+  const hp=new THREE.Vector3(Math.cos(ang)*R, 0, Math.sin(ang)*R);
+  // plataforma holográfica
+  const disc=new THREE.Mesh(new THREE.CircleGeometry(14.5, 56),
+    new THREE.MeshBasicMaterial({ color:g.color, transparent:true, opacity:0.055, depthWrite:false, fog:false }));
+  disc.rotation.x=-Math.PI/2; disc.position.copy(hp).add(new THREE.Vector3(0,-7.5,0));
+  scene.add(disc);
+  const ring=new THREE.Mesh(new THREE.RingGeometry(14.1, 14.5, 72),
+    new THREE.MeshBasicMaterial({ color:g.color, transparent:true, opacity:0.42, depthWrite:false,
+      side:THREE.DoubleSide, fog:false }));
+  ring.rotation.x=-Math.PI/2; ring.position.copy(disc.position);
+  scene.add(ring);
+  // anillo orbital fino del hub
+  const orb=new THREE.Mesh(new THREE.TorusGeometry(3.8, 0.05, 8, 90),
+    new THREE.MeshBasicMaterial({ color:g.color, transparent:true, opacity:0.5, fog:false, depthWrite:false }));
+  const og=new THREE.Group(); og.add(orb); og.position.copy(hp);
+  og.rotation.x=0.55; og.rotation.z=0.2+i*0.15; og.userData.vel=0.3+i*0.06;
+  scene.add(og); anillosHub.push(og);
 
-  const disc = new THREE.Mesh(new THREE.CircleGeometry(14, 48),
-    new THREE.MeshBasicMaterial({color:g.color, transparent:true, opacity:0.07, depthWrite:false}));
-  disc.rotation.x = -Math.PI/2; disc.position.copy(hp).add(new THREE.Vector3(0,-7,0));
-  mundo.add(disc);
-  const ring = new THREE.Mesh(new THREE.RingGeometry(13.7, 14, 64),
-    new THREE.MeshBasicMaterial({color:g.color, transparent:true, opacity:0.35, depthWrite:false, side:THREE.DoubleSide}));
-  ring.rotation.x = -Math.PI/2; ring.position.copy(disc.position);
-  mundo.add(ring);
-
-  const hub = addNodo(g.nombre, "Sección: "+g.nombre+". Toca sus nodos para ver cada pieza.", g.color, hp, 1.9, 44, 0.18);
-  lineasPts.push(centroPos.clone(), hp.clone());
-  aristas.push({a:hp.clone(), b:centroPos.clone()});
-
-  const cartel = etiqueta("SECCIÓN · "+g.nombre.toUpperCase(), g.color, 34);
-  cartel.position.copy(hp).add(new THREE.Vector3(0, 12, 0));
-  mundo.add(cartel);
+  addNodo(g.nombre, "Sección: "+g.nombre+". Toca sus nodos para ver cada pieza.", g.color, hp, 2.0, 40, true, 0.9+i*0.18);
+  const cartel=etiqueta("SECCIÓN · "+g.nombre.toUpperCase(), g.color, 30, true);
+  cartel.position.copy(hp).add(new THREE.Vector3(0, 13.5, 0));
+  cartel.material.opacity=0;
+  scene.add(cartel);
+  nodosPorNombre[g.nombre].userData.etiqueta2=cartel;
 
   g.nodos.forEach(([nom,des],j)=>{
     const m=g.nodos.length, ph=Math.acos(1-2*(j+0.5)/m), th=Math.PI*(1+Math.sqrt(5))*j+1.3;
     const r2=9.5;
     const lp=hp.clone().add(new THREE.Vector3(r2*Math.sin(ph)*Math.cos(th), r2*Math.cos(ph)*0.75, r2*Math.sin(ph)*Math.sin(th)));
-    addNodo(nom,des,g.color,lp,1.0,32,0.14);
-    lineasPts.push(hp.clone(), lp.clone());
-    aristas.push({a:lp.clone(), b:hp.clone()});
+    addNodo(nom, des, g.color, lp, 1.0, 30, false, 1.5+(ordenNacimiento++)*0.045);
   });
 });
-const lg=new THREE.BufferGeometry().setFromPoints(lineasPts);
-mundo.add(new THREE.LineSegments(lg,new THREE.LineBasicMaterial({color:0x8a93a6,transparent:true,opacity:0.35})));
 
-// --- partículas doradas viajando por las aristas hacia el centro ---
-const P_COUNT = 260;
-const pGeo = new THREE.BufferGeometry();
-const pPos = new Float32Array(P_COUNT*3);
-const parts = [];
-for(let i=0;i<P_COUNT;i++) parts.push({e:(Math.random()*aristas.length)|0, t:Math.random(), s:0.25+Math.random()*0.55});
-pGeo.setAttribute('position', new THREE.BufferAttribute(pPos,3));
-const pMat = new THREE.PointsMaterial({color:0xFFD54F, size:0.9, transparent:true, opacity:0.9, depthWrite:false, blending:THREE.AdditiveBlending});
-mundo.add(new THREE.Points(pGeo, pMat));
-const _v = new THREE.Vector3();
-function updateParticulas(dt){
-  for(let i=0;i<P_COUNT;i++){
-    const p=parts[i];
-    p.t += p.s*dt;
-    if(p.t>=1){ p.e=(Math.random()*aristas.length)|0; p.t=0; }
-    const E=aristas[p.e];
-    _v.copy(E.a).lerp(E.b, p.t);
-    pPos[i*3]=_v.x; pPos[i*3+1]=_v.y; pPos[i*3+2]=_v.z;
+// ================= ARISTAS: tubos de flujo =================
+function mergeTubos(items){
+  let vCount=0, iCount=0;
+  for(const it of items){ vCount+=it.geo.attributes.position.count; iCount+=it.geo.index.count; }
+  const pos=new Float32Array(vCount*3), nor=new Float32Array(vCount*3), uvA=new Float32Array(vCount*2);
+  const tint=new Float32Array(vCount*3), phase=new Float32Array(vCount);
+  const idx=new (vCount>65535?Uint32Array:Uint16Array)(iCount);
+  let vo=0, io=0;
+  for(const it of items){
+    const g=it.geo, n=g.attributes.position.count;
+    pos.set(g.attributes.position.array, vo*3);
+    nor.set(g.attributes.normal.array, vo*3);
+    uvA.set(g.attributes.uv.array, vo*2);
+    for(let i=0;i<n;i++){ tint[(vo+i)*3]=it.tint[0]; tint[(vo+i)*3+1]=it.tint[1]; tint[(vo+i)*3+2]=it.tint[2]; phase[vo+i]=it.phase; }
+    const ia=g.index.array;
+    for(let i=0;i<ia.length;i++) idx[io+i]=ia[i]+vo;
+    vo+=n; io+=ia.length; g.dispose();
   }
-  pGeo.attributes.position.needsUpdate = true;
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos,3));
+  geo.setAttribute('normal', new THREE.BufferAttribute(nor,3));
+  geo.setAttribute('uv', new THREE.BufferAttribute(uvA,2));
+  geo.setAttribute('aTint', new THREE.BufferAttribute(tint,3));
+  geo.setAttribute('aPhase', new THREE.BufferAttribute(phase,1));
+  geo.setIndex(new THREE.BufferAttribute(idx,1));
+  return geo;
 }
+const tubosPrim=[], tubosCross=[];
+function tuboRecto(a,b,r){
+  return new THREE.TubeGeometry(new THREE.LineCurve3(a.clone(), b.clone()), 20, r, 6, false);
+}
+// primarias: el flujo viaja HACIA el centro (a=origen -> b=destino)
+GRUPOS.forEach(g=>{
+  const hp=POS[g.nombre], t=hexRgb(g.color);
+  tubosPrim.push({ geo:tuboRecto(hp, centroPos, 0.30), tint:t, phase:Math.random() });
+  g.nodos.forEach(([nom])=>{ tubosPrim.push({ geo:tuboRecto(POS[nom], hp, 0.22), tint:t, phase:Math.random() }); });
+});
+// cross-links: arcos elevados, finos y tenues
+CROSS.forEach(([a,b])=>{
+  const pa=POS[a], pb=POS[b];
+  if(!pa||!pb) return;
+  const mid=pa.clone().add(pb).multiplyScalar(0.5);
+  const ctrl=mid.clone(); ctrl.y+= (a==="CEREBRO"||b==="CEREBRO") ? 12 : 16;
+  const curve=new THREE.QuadraticBezierCurve3(pa.clone(), ctrl, pb.clone());
+  tubosCross.push({ geo:new THREE.TubeGeometry(curve, 42, 0.10, 6, false), tint:[0.55,0.72,0.91], phase:Math.random() });
+});
+const mallaPrim=new THREE.Mesh(mergeTubos(tubosPrim),
+  materialFlujo({ conTinte:true, velocidad:0.30, anchoCabeza:0.30, base:0.30, pico:2.6, brillo:1.0 }));
+mallaPrim.renderOrder=2; mallaPrim.frustumCulled=false;
+scene.add(mallaPrim);
+const mallaCross=new THREE.Mesh(mergeTubos(tubosCross),
+  materialFlujo({ conTinte:true, velocidad:0.18, anchoCabeza:0.20, base:0.20, pico:1.7, brillo:0.55 }));
+mallaCross.renderOrder=2; mallaCross.frustumCulled=false;
+scene.add(mallaCross);
 
-// --- polvo dorado ambiental ---
-(function(){
-  const N=350, pos=new Float32Array(N*3);
-  for(let i=0;i<N;i++){ pos[i*3]=(Math.random()-0.5)*200; pos[i*3+1]=(Math.random()-0.5)*120; pos[i*3+2]=(Math.random()-0.5)*200; }
-  const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(pos,3));
-  const polvo=new THREE.Points(g,new THREE.PointsMaterial({color:0xFFD54F,size:0.4,transparent:true,opacity:0.45,depthWrite:false}));
-  polvo.name='polvo';
-  mundo.add(polvo);
-})();
-
-// leyenda
-document.getElementById('leyenda').innerHTML =
-  `<div><span class="dot" style="background:${CENTRO.color}"></span>Cerebro central</div>` +
-  GRUPOS.map(g=>`<div><span class="dot" style="background:${g.color}"></span>${g.nombre}</div>`).join('');
-
-// ---------- POSTPROCESADO ÉLITE: RenderPipeline + bloom ----------
+// ================= POSTPROCESADO =================
 const renderPipeline = new THREE.RenderPipeline(renderer);
 const scenePass = pass(scene, camera);
 const scenePassColor = scenePass.getTextureNode('output');
-const bloomPass = bloom(scenePassColor, 0.55, 0.5, 0.6);
+const bloomPass = bloom(scenePassColor, 0.65, 0.55, 0.62); // calibrado: brillo sin quemar
 renderPipeline.outputNode = scenePassColor.add(bloomPass);
 
-// ---------- CONTROLES ----------
+// ================= CONTROLES =================
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.set(0,1,0);
-controls.enableDamping = true;
-controls.dampingFactor = 0.06;
-controls.autoRotate = true;
-controls.autoRotateSpeed = 0.7;
-controls.minDistance = 38;
-controls.maxDistance = 140;
-controls.maxPolarAngle = Math.PI*0.72;
-controls.minPolarAngle = Math.PI*0.18;
+controls.target.set(0,2,0);
+controls.enableDamping=true; controls.dampingFactor=0.06;
+controls.enablePan=false;
+controls.autoRotate = !reducido; controls.autoRotateSpeed=0.55;
+controls.minDistance=38; controls.maxDistance=150;
+controls.maxPolarAngle=Math.PI*0.74; controls.minPolarAngle=Math.PI*0.16;
+controls.enabled=false; // hasta que termine la apertura
 controls.update();
 
-// ---------- INTERACCIÓN: tocar nodo ----------
+// ================= INTERACCIÓN =================
 const ray=new THREE.Raycaster(), raton=new THREE.Vector2();
 const tarjeta=document.getElementById('tarjeta');
 function mostrar(n){
@@ -268,9 +498,8 @@ function mostrar(n){
   tarjeta.style.display = n.userData.desc ? 'block':'none';
 }
 document.getElementById('cerrar').onclick=()=>tarjeta.style.display='none';
-
 let px=0, py=0, movido=0;
-canvas.addEventListener('pointerdown',e=>{px=e.clientX;py=e.clientY;movido=0;});
+canvas.addEventListener('pointerdown',e=>{ px=e.clientX; py=e.clientY; movido=0; });
 canvas.addEventListener('pointermove',e=>{ movido+=Math.abs(e.movementX||0)+Math.abs(e.movementY||0); });
 canvas.addEventListener('pointerup',e=>{
   if(movido<8){
@@ -281,28 +510,91 @@ canvas.addEventListener('pointerup',e=>{
   }
 });
 
-// ---------- DESCRIPCIONES DESDE LA APP (postMessage, nombres exactos) ----------
+// ================= ESTADOS DE MISIÓN (lo activo se ve) =================
+function aplicarEstado(nodo, estado){
+  const u=nodo.userData;
+  if(estado==='activo' || estado==='en_curso'){
+    u.state='hot';
+    u.uAmp.value=0.42; u.uBright.value=2.1;
+    u.halo.scale.set(u.baseHalo*1.7, u.baseHalo*1.7, 1);
+    u.halo.material.opacity=0.8;
+  } else if(estado==='pendiente'){
+    u.state='dim';
+    u.uAmp.value=0.05; u.uBright.value=0.7;
+    u.halo.scale.set(u.baseHalo*0.75, u.baseHalo*0.75, 1);
+    u.halo.material.opacity=0.25;
+  } else {
+    u.state='normal';
+    u.uAmp.value=0.16; u.uBright.value = (u.nombre==="CEREBRO") ? 1.9 : 1.55;
+    u.halo.scale.set(u.baseHalo, u.baseHalo, 1);
+    u.halo.material.opacity=0.5;
+  }
+}
+
+// ================= MENSAJES DESDE LA APP =================
 addEventListener('message', e=>{
-  if(e.data && e.data.type==='nassar-descs' && e.data.descs){
+  if(!e.data) return;
+  if(e.data.type==='nassar-descs' && e.data.descs){
     nodosMalla.forEach(m=>{
       const d=e.data.descs[m.userData.nombre];
       if(d) m.userData.desc=d;
     });
   }
+  if(e.data.type==='nassar-misiones' && Array.isArray(e.data.misiones)){
+    e.data.misiones.forEach(mi=>{
+      const nn=MAPA_MISIONES[mi.nombre];
+      if(!nn) return; // "App Nassar en vivo" no es nodo: se ignora
+      const nodo=nodosPorNombre[nn];
+      if(nodo) aplicarEstado(nodo, mi.estado);
+    });
+  }
 });
 
-// ---------- BUCLE ----------
+// leyenda
+document.getElementById('leyenda').innerHTML =
+  `<div><span class="dot" style="background:${CENTRO.color};color:${CENTRO.color}"></span>Cerebro central</div>` +
+  GRUPOS.map(g=>`<div><span class="dot" style="background:${g.color};color:${g.color}"></span>${g.nombre}</div>`).join('');
+
+// ================= BUCLE =================
 function resize(){ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); }
 addEventListener('resize',resize); resize();
 
-const clock = new THREE.Clock();
+const clock=new THREE.Clock();
+let introT = reducido ? 1 : 0;
+let primerFrame=true;
 renderer.setAnimationLoop(()=>{
-  const dt = Math.min(clock.getDelta(), 0.05);
+  const dt=Math.min(clock.getDelta(), 0.05);
+  const t=clock.elapsedTime;
+  // apertura cinematográfica
+  if(introT<1){
+    introT=Math.min(1, introT+dt/3.4);
+    const k=easeInOutCubic(introT);
+    camera.position.lerpVectors(camStart, camEnd, k);
+    camera.lookAt(0,2,0);
+    if(introT>=1) controls.enabled=true;
+  } else if(!controls.enabled){ controls.enabled=true; }
   controls.update();
-  updateParticulas(dt);
-  const polvo = mundo.getObjectByName('polvo');
-  if(polvo) polvo.rotation.y += dt*0.008;
+  // aparición escalonada de nodos
+  for(const n of nodosMalla){
+    const u=n.userData;
+    const s=easeOutBack(clamp01((t-u.nacimiento)/0.6));
+    const sc=Math.max(0.0001, s);
+    n.scale.setScalar(sc);
+    const hs=Math.max(0.0001, u.baseHalo*(u.state==='hot'?1.7:u.state==='dim'?0.75:1)*s);
+    u.halo.scale.set(hs,hs,1);
+    if(u.etiqueta) u.etiqueta.material.opacity=clamp01((t-u.nacimiento-0.25)/0.5);
+    if(u.etiqueta2) u.etiqueta2.material.opacity=clamp01((t-u.nacimiento-0.25)/0.5);
+  }
+  // vida ambiental
+  anilloP1.rotation.y+=dt*0.020; anilloP2.rotation.y-=dt*0.014;
+  for(const g of anillosNucleo) g.rotation.y+=dt*g.userData.vel;
+  for(const g of anillosHub) g.rotation.y+=dt*g.userData.vel;
+  reticula.rotation.z+=dt*0.004;
+  estrellas2.rotation.y+=dt*0.0022;
+  haz.material.opacity=0.065+0.022*Math.sin(t*0.8);
   renderPipeline.render();
+  if(primerFrame){ primerFrame=false;
+    setTimeout(()=>{ document.getElementById('intro').style.opacity='0'; }, 350); }
 });
 </script>
 </body>
