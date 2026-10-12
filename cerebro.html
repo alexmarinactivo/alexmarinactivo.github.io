@@ -469,7 +469,7 @@ function mostrarDetalle(id){
   document.getElementById('d-meta').textContent=
     (n.hijos.length?n.hijos.length+' SUBNODOS':'NODO FINAL')+(est?' · '+est:'');
   const btns=document.getElementById('d-btns'); btns.innerHTML='';
-  if(n.hijos.length){
+  if(n.hijos.length&&id!==focoId){
     const b=document.createElement('button'); b.className='btn oro'; b.textContent='Entrar →';
     b.onclick=()=>navegar(path.concat([id])); btns.appendChild(b);
   }
@@ -510,7 +510,11 @@ canvas.addEventListener('pointermove',e=>{
 canvas.addEventListener('pointerup',e=>{
   if(movido<8){
     const id=pick(e);
-    if(id){ if(NODOS[id].hijos.length) navegar(path.concat([id])); else mostrarDetalle(id); }
+    if(id){
+      if(id===focoId) mostrarDetalle(id);
+      else if(NODOS[id].hijos.length) navegar(path.concat([id]));
+      else mostrarDetalle(id);
+    }
     else ocultarDetalle();
   }
 });
