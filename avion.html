@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Vista avión — Nassar·OS</title>
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three.webgpu.js",
+    "three/webgpu": "./vendor/three.webgpu.js",
+    "three/tsl": "./vendor/three.tsl.js",
+    "three/addons/": "./vendor/addons/"
+  }
+}
+</script>
+<style>
+@font-face{font-family:'Inter';src:url('vendor/fonts/inter-400.woff2') format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:'Inter';src:url('vendor/fonts/inter-600.woff2') format('woff2');font-weight:600;font-display:swap}
+@font-face{font-family:'Inter';src:url('vendor/fonts/inter-700.woff2') format('woff2');font-weight:700;font-display:swap}
+@font-face{font-family:'Instrument Serif';src:url('vendor/fonts/instrument-serif-400.woff2') format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:'Kode Mono';src:url('vendor/fonts/kode-mono-400.woff2') format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:'Kode Mono';src:url('vendor/fonts/kode-mono-600.woff2') format('woff2');font-weight:600;font-display:swap}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;
+ background:radial-gradient(120% 90% at 50% 30%, #2A2B30 45%, #151619 100%);
+ color:#ECEAE3;font-family:'Inter',-apple-system,"Segoe UI",Roboto,sans-serif;
+ -webkit-tap-highlight-color:transparent}
+#c{position:fixed;inset:0;display:block;touch-action:none}
+#vineta{position:fixed;inset:0;pointer-events:none;z-index:3;
+ background:radial-gradient(ellipse at 50% 42%,transparent 55%,rgba(5,6,8,.36) 82%,rgba(3,4,6,.62) 100%)}
+.hud{position:fixed;z-index:10;pointer-events:none}
+#topbar{top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;
+ padding:14px 18px;animation:aparicion 1.2s ease .2s both}
+#marca{font-family:'Kode Mono',monospace;font-weight:600;font-size:15px;letter-spacing:2px;color:#ECEAE3}
+#marca b{color:#FFD54F;font-weight:600}
+#live{display:flex;align-items:center;gap:10px;font-family:'Kode Mono',monospace;font-size:12px;color:#A3A098}
+#pildora{display:flex;align-items:center;gap:7px;border:1px solid rgba(236,234,227,.14);
+ background:rgba(27,28,33,.85);border-radius:20px;padding:6px 13px;color:#ECEAE3;letter-spacing:1.5px;font-size:11px}
+#pildora .punto{width:8px;height:8px;border-radius:50%;background:#4ade80;animation:pulso 1.8s infinite}
+@keyframes pulso{0%{box-shadow:0 0 0 0 rgba(74,222,128,.55)}70%{box-shadow:0 0 0 8px rgba(74,222,128,0)}100%{box-shadow:0 0 0 0 rgba(74,222,128,0)}}
+#caption{top:64px;left:0;right:0;text-align:center;font-family:'Kode Mono',monospace;font-size:12px;
+ letter-spacing:3px;color:#A3A098;animation:aparicion 1.2s ease .4s both}
+.card{background:rgba(27,28,33,.9);border:1px solid rgba(236,234,227,.14);border-radius:14px;
+ padding:14px 16px;backdrop-filter:blur(10px);box-shadow:0 10px 40px rgba(0,0,0,.45);pointer-events:auto}
+#detalle{left:50%;transform:translateX(-50%);bottom:18px;width:min(480px,calc(100% - 28px));display:none;z-index:11;position:fixed}
+#detalle.vis{display:block;animation:subir .45s cubic-bezier(.2,.8,.2,1)}
+@keyframes subir{from{opacity:0;transform:translate(-50%,16px)}to{opacity:1;transform:translate(-50%,0)}}
+#d-nombre{font-family:'Instrument Serif',serif;font-size:26px;color:#ECEAE3;margin-bottom:6px}
+#d-nombre .dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:10px}
+#d-desc{font-size:14px;color:#c9c5b9;line-height:1.6;margin-bottom:10px}
+#d-meta{font-family:'Kode Mono',monospace;font-size:11px;letter-spacing:1.5px;color:#A3A098}
+#d-cerrar{position:absolute;top:10px;right:14px;color:#A3A098;font-size:20px;cursor:pointer;padding:4px;pointer-events:auto}
+#ayuda{bottom:18px;left:0;right:0;text-align:center;color:#6f6c63;font-size:11.5px;letter-spacing:1.5px;
+ font-family:'Kode Mono',monospace;animation:aparicion 1.2s ease 1.2s both}
+#intro{position:fixed;inset:0;background:#151619;z-index:40;pointer-events:none;transition:opacity 1.6s ease}
+#err3d{position:fixed;inset:0;display:none;align-items:center;justify-content:center;color:#A3A098;
+ font-size:14px;text-align:center;padding:30px;z-index:20}
+@keyframes aparicion{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="vineta"></div>
+<div class="hud" id="topbar"><div id="marca">NASSAR<b>·OS</b></div>
+ <div id="live"><span id="reloj">--:--</span><span id="pildora"><span class="punto"></span>EN VIVO</span></div></div>
+<div class="hud" id="caption">✈ vista avión · todo el mapa interconectado</div>
+<div class="hud card" id="detalle"><span id="d-cerrar">×</span><div id="d-nombre"></div><p id="d-desc"></p><div id="d-meta"></div></div>
+<div class="hud" id="ayuda">arrastra para girar · pellizca para acercar · toca un nodo para verlo</div>
+<div id="intro"></div>
+<div id="err3d"><div>No se pudo iniciar el 3D en este navegador.<br>Prueba con Chrome o Safari actualizado.</div></div>
+<script>
+window.__nassarQ=[];
+addEventListener('message',function(e){
+  if(e.origin!==location.origin) return;
+  if(e.data&&e.data.type&&e.data.type.indexOf('nassar-')===0) window.__nassarQ.push(e.data);
+});
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/OrbitControls.js';
+import { pass, time, uniform, color, float, sin } from 'three/tsl';
+import { bloom } from 'three/addons/BloomNode.js';
+
+const NODOS = {
+"cerebro":{nombre:"CEREBRO",label:"nassar",color:"#FFD54F",desc:"Nassar Intelligence: tu agente personal. Orquesto las 5 secciones; tú solo decides lo imprescindible.",hijos:["Misiones de dinero","Cerebros IA","Radar y caza","Vida y trámites","Capacidades"]},
+"Misiones de dinero":{label:"dinero",color:"#66BB6A",desc:"De aquí saldrán tus ganancias.",hijos:["Producto nuevo","Crypto","Forex demo","Vinted"]},
+"Producto nuevo":{color:"#66BB6A",desc:"Misión ganancias: producto digital creado desde cero, tu misión principal.",hijos:["Disociación total","Email neutro","Maletín","Libertad total"]},
+"Disociación total":{color:"#66BB6A",desc:"Nada a tu nombre ni vinculado a ti hasta que haya ganancias reales.",hijos:[]},
+"Email neutro":{color:"#66BB6A",desc:"alexmarinactivo@gmail.com — identidad neutra Alex Marin.",hijos:[]},
+"Maletín":{color:"#66BB6A",desc:"Cada acceso y contraseña de la misión, en PDF actualizado.",hijos:[]},
+"Libertad total":{color:"#66BB6A",desc:"Tú decides el cómo; Ab solo aparece en lo imprescindible.",hijos:[]},
+"Crypto":{color:"#66BB6A",desc:"En pausa: sin capital para invertir.",hijos:["En pausa","Paper trading","TradingView"]},
+"En pausa":{color:"#66BB6A",desc:"Se retoma cuando tú digas.",hijos:[]},
+"Paper trading":{color:"#66BB6A",desc:"Backtest 5 años: tendencia SMA200 +258%.",hijos:[]},
+"TradingView":{color:"#66BB6A",desc:"100.000 $ virtuales, sin apalancamiento.",hijos:[]},
+"Forex demo":{color:"#66BB6A",desc:"Demo con 100.000 $ virtuales en TradingView.",hijos:["TradingView FX","100.000 $","Sin XTB"]},
+"TradingView FX":{color:"#66BB6A",desc:"Cuenta alexmarinactivo, paper trading activado.",hijos:[]},
+"100.000 $":{color:"#66BB6A",desc:"Capital virtual para practicar sin riesgo.",hijos:[]},
+"Sin XTB":{color:"#66BB6A",desc:"La CNMV prohíbe las demos a minoristas en España.",hijos:[]},
+"Vinted":{color:"#66BB6A",desc:"Plan de reventa: investigación completa.",hijos:["Sneakers","Vintage deportivo","Polos de marca","Electrónica","Lotes infantiles"]},
+"Sneakers":{color:"#66BB6A",desc:"El nicho que más se mueve.",hijos:[]},
+"Vintage deportivo":{color:"#66BB6A",desc:"Camisetas y chándals con historia.",hijos:[]},
+"Polos de marca":{color:"#66BB6A",desc:"Hombre: lo clásico que siempre vende.",hijos:[]},
+"Electrónica":{color:"#66BB6A",desc:"Consolas y gadgets de segunda mano.",hijos:[]},
+"Lotes infantiles":{color:"#66BB6A",desc:"Ropa de niño en lote: volumen.",hijos:[]},
+"Cerebros IA":{label:"cerebros",color:"#4DD0E1",desc:"Los cerebros que piensan contigo.",hijos:["El Consejo"]},
+"El Consejo":{color:"#4DD0E1",desc:"Las 5 mejores IAs debaten tus decisiones. Diseño congelado.",hijos:["chatgpt","claude","gemini","grok","deepseek","Copiloto"]},
+"chatgpt":{nombre:"ChatGPT",color:"#4DD0E1",desc:"OpenAI — cuenta en marcha, clave pendiente.",hijos:[]},
+"claude":{nombre:"Claude",color:"#4DD0E1",desc:"Anthropic — cuenta en marcha, clave pendiente.",hijos:[]},
+"gemini":{nombre:"Gemini",color:"#4DD0E1",desc:"Google — clave creada; pégala en la Bóveda.",hijos:[]},
+"grok":{nombre:"Grok",color:"#4DD0E1",desc:"xAI — pendiente recarga de saldo.",hijos:[]},
+"deepseek":{nombre:"DeepSeek",color:"#4DD0E1",desc:"DeepSeek — cuenta en marcha, clave pendiente.",hijos:[]},
+"Copiloto":{color:"#4DD0E1",desc:"Tu sistema operativo personal del camionero internacional. Aparcado hasta montar El Consejo.",hijos:["Trabajo","Dinero","Familia","Casa","Salud","Camión"]},
+"Trabajo":{color:"#4DD0E1",desc:"Tiempos, rutas y esperas en muelles.",hijos:[]},
+"Dinero":{color:"#4DD0E1",desc:"Tus números, siempre a mano.",hijos:[]},
+"Familia":{color:"#4DD0E1",desc:"Lo importante, primero.",hijos:[]},
+"Casa":{color:"#4DD0E1",desc:"Tu base en tierra.",hijos:[]},
+"Salud":{color:"#4DD0E1",desc:"La máquina más importante eres tú.",hijos:[]},
+"Camión":{color:"#4DD0E1",desc:"El camión como sensor: Volvo FH Aero.",hijos:[]},
+"Radar y caza":{label:"radar",color:"#F06292",desc:"Vigilo el mercado para traerte lo mejor.",hijos:["Radar IA","Laboratorio","Bóveda","Dieta de información"]},
+"Radar IA":{color:"#F06292",desc:"Cada mañana caza herramientas, modelos y trucos.",hijos:["Caza diaria","El muro"]},
+"Caza diaria":{color:"#F06292",desc:"Sale cada mañana, ~08:00.",hijos:[]},
+"El muro":{color:"#F06292",desc:"Se actualiza solo con lo cazado.",hijos:[]},
+"Laboratorio":{color:"#F06292",desc:"Donde se cazan y prueban herramientas.",hijos:["Cazar","Probar","Tú decides"]},
+"Cazar":{color:"#F06292",desc:"Herramientas y estrategias nuevas.",hijos:[]},
+"Probar":{color:"#F06292",desc:"Las pruebo antes de proponértelas.",hijos:[]},
+"Tú decides":{color:"#F06292",desc:"Nada entra sin tu permiso explícito.",hijos:[]},
+"Bóveda":{color:"#F06292",desc:"La mejor herramienta de IA por categoría.",hijos:["17 categorías","Claude Skills"]},
+"17 categorías":{color:"#F06292",desc:"Inspeccionadas en paralelo.",hijos:[]},
+"Claude Skills":{color:"#F06292",desc:"Las que ganan la comparativa.",hijos:[]},
+"Dieta de información":{label:"dieta info",color:"#F06292",desc:"Sin scroll infinito: yo extraigo el valor.",hijos:["Cuentas","Resúmenes","Guía PDF"]},
+"Cuentas":{color:"#F06292",desc:"Me pasas reels; yo los reviso.",hijos:[]},
+"Resúmenes":{color:"#F06292",desc:"Lo útil para ganar dinero.",hijos:[]},
+"Guía PDF":{color:"#F06292",desc:"La guía del emprendedor IA.",hijos:[]},
+"Vida y trámites":{label:"vida",color:"#FFA726",desc:"Tu vida administrativa bajo control.",hijos:["Canje permiso","Cita INSS","Vuelo","Finanzas","Privacidad","Familia"]},
+"Canje permiso":{color:"#FFA726",desc:"Canje del permiso marroquí (categoría B).",hijos:["Validación 11 oct","Tasa 2.3","Esperando Marruecos"]},
+"Validación 11 oct":{color:"#FFA726",desc:"Enviada desde tu móvil; correo DGT recibido.",hijos:[]},
+"Tasa 2.3":{color:"#FFA726",desc:"28,87 € al presentar el canje.",hijos:[]},
+"Esperando Marruecos":{color:"#FFA726",desc:"Falta el localizador para el paso 2.",hijos:[]},
+"Cita INSS":{color:"#FFA726",desc:"29 de octubre, 09:00, Villena.",hijos:["29 oct · 09:00","Localizador","CAPI + ayuda"]},
+"29 oct · 09:00":{color:"#FFA726",desc:"Villena, Seguridad Social.",hijos:[]},
+"Localizador":{color:"#FFA726",desc:"7e2d7b7 — no se cancela sin permiso.",hijos:[]},
+"CAPI + ayuda":{color:"#FFA726",desc:"Del recién nacido + pago único.",hijos:[]},
+"Vuelo":{color:"#FFA726",desc:"FR5540 · 30 oct · Tánger → Valencia.",hijos:["FR5540","06:45 → 08:10","AUTR3S"]},
+"FR5540":{color:"#FFA726",desc:"Ryanair, 30 de octubre.",hijos:[]},
+"06:45 → 08:10":{color:"#FFA726",desc:"Tánger → Valencia. Te aviso de cambios.",hijos:[]},
+"AUTR3S":{color:"#FFA726",desc:"Tu reserva.",hijos:[]},
+"Finanzas":{color:"#FFA726",desc:"Tu economía bajo control.",hijos:["Spendee","App propia","Presupuestos"]},
+"Spendee":{color:"#FFA726",desc:"Vinculada: veo saldos y movimientos.",hijos:[]},
+"App propia":{color:"#FFA726",desc:"Aparcada; la viste penosa.",hijos:[]},
+"Presupuestos":{color:"#FFA726",desc:"Pendientes: ingresos, fijos y ahorro.",hijos:[]},
+"Privacidad":{color:"#FFA726",desc:"Programa de privacidad total v5.",hijos:["Pixel 9 Pro","Mullvad VPN","Signal","Programa v5"]},
+"Pixel 9 Pro":{color:"#FFA726",desc:"GrapheneOS: tu dispositivo privado.",hijos:[]},
+"Mullvad VPN":{color:"#FFA726",desc:"5 €/mes, cuenta solo-número.",hijos:[]},
+"Signal":{color:"#FFA726",desc:"Para lo sensible de la familia.",hijos:[]},
+"Programa v5":{color:"#FFA726",desc:"40 días, 100% legal.",hijos:[]},
+"Familia":{color:"#FFA726",desc:"Tu mujer y tu hijo recién nacido.",hijos:["Mujer","Hijo","Signal fam"]},
+"Mujer":{color:"#FFA726",desc:"Lo sensible, fuera del móvil normal.",hijos:[]},
+"Hijo":{color:"#FFA726",desc:"Recién nacido. Sin fotos en abierto.",hijos:[]},
+"Signal fam":{nombre:"Signal",color:"#FFA726",desc:"Vuestras conversaciones sensibles.",hijos:[]},
+"Capacidades":{label:"capacidades",color:"#7986CB",desc:"Lo que puedo hacer por ti.",hijos:["Navegador","Memoria","Investigación","Artefactos","Spotify"]},
+"Navegador":{color:"#7986CB",desc:"Opero webs por ti.",hijos:["Trámites","Compras","Altas"]},
+"Trámites":{color:"#7986CB",desc:"Sedes electrónicas y papeleos.",hijos:[]},
+"Compras":{color:"#7986CB",desc:"Las comparo y las remato por ti.",hijos:[]},
+"Altas":{color:"#7986CB",desc:"Cuentas nuevas, con tu permiso.",hijos:[]},
+"Memoria":{color:"#7986CB",desc:"Aprendo de ti y recuerdo lo importante.",hijos:["Reglas","Misiones","Decisiones"]},
+"Reglas":{color:"#7986CB",desc:"Lo que me ordenas que no olvide.",hijos:[]},
+"Misiones":{color:"#7986CB",desc:"Tus objetivos, siempre a mano.",hijos:[]},
+"Decisiones":{color:"#7986CB",desc:"Lo decidido, guardado.",hijos:[]},
+"Investigación":{color:"#7986CB",desc:"Busco y verifico en la web.",hijos:["Negocios","Competencia","Con enlaces"]},
+"Negocios":{color:"#7986CB",desc:"Nuevas vías para ganar.",hijos:[]},
+"Competencia":{color:"#7986CB",desc:"Quién hace qué y a qué precio.",hijos:[]},
+"Con enlaces":{color:"#7986CB",desc:"Cada dato con su enlace.",hijos:[]},
+"Artefactos":{color:"#7986CB",desc:"Documentos listos para usar.",hijos:["Maletín art","Guías","Informes"]},
+"Maletín art":{nombre:"Maletín",color:"#7986CB",desc:"Tus accesos, en PDF al día.",hijos:[]},
+"Guías":{color:"#7986CB",desc:"Manuales paso a paso.",hijos:[]},
+"Informes":{color:"#7986CB",desc:"Investigaciones listas para leer.",hijos:[]},
+"Spotify":{color:"#7986CB",desc:"Música desde el chat.",hijos:[]}
+};
+for(const id in NODOS){ const n=NODOS[id]; if(!n.nombre) n.nombre=id; if(!n.label) n.label=n.nombre.toLowerCase(); }
+const PADRE={};
+for(const id in NODOS) for(const h of NODOS[id].hijos) PADRE[h]=id;
+
+const PROF={};
+for(const id of Object.keys(NODOS)) PROF[id]= id==='cerebro'?0:PROF[PADRE[id]]+1;
+
+// ================= RENDERER / ESCENA =================
+const canvas=document.getElementById('c');
+const reducido=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let renderer;
+try{
+  renderer=new THREE.WebGPURenderer({canvas,antialias:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;
+  await renderer.init();
+}catch(e){ document.getElementById('err3d').style.display='flex'; throw e; }
+try{ await Promise.race([document.fonts.load('600 30px "Kode Mono"'), new Promise(r=>setTimeout(r,2500))]); }catch(e){}
+
+const scene=new THREE.Scene();
+(function fondo(){
+  const c=document.createElement('canvas'); c.width=c.height=512;
+  const x=c.getContext('2d');
+  const g=x.createRadialGradient(256,150,40,256,256,380);
+  g.addColorStop(0,'#2E2F34'); g.addColorStop(0.45,'#222326'); g.addColorStop(1,'#141518');
+  x.fillStyle=g; x.fillRect(0,0,512,512);
+  const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace;
+  scene.background=t;
+})();
+scene.fog=new THREE.FogExp2(0x17181c,0.0022);
+const camera=new THREE.PerspectiveCamera(50,innerWidth/innerHeight,0.1,1200);
+camera.position.set(0,150,330); camera.lookAt(0,0,0);
+
+const easeInOutCubic=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+const easeOutBack=t=>{const c=1.70158,c3=c+1;return 1+c3*Math.pow(t-1,3)+c*Math.pow(t-1,2);};
+const clamp01=t=>Math.max(0,Math.min(1,t));
+function hexRgb(h){const n=parseInt(h.slice(1),16);return[((n>>16)&255)/255,((n>>8)&255)/255,(n&255)/255];}
+function glowTex(){const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d');
+ const g=x.createRadialGradient(64,64,0,64,64,64);
+ g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(0.25,'rgba(255,255,255,.5)');
+ g.addColorStop(0.6,'rgba(255,255,255,.12)');g.addColorStop(1,'rgba(255,255,255,0)');
+ x.fillStyle=g;x.fillRect(0,0,128,128);return new THREE.CanvasTexture(c);}
+const GLOW=glowTex();
+
+function etiquetaMono(texto,fs){
+  const c=document.createElement('canvas');
+  let x=c.getContext('2d');
+  x.font='600 '+fs+'px "Kode Mono",monospace';
+  try{x.letterSpacing='2px';}catch(e){}
+  const tw=x.measureText(texto).width,pad=13;
+  c.width=Math.ceil(tw+pad*2);c.height=fs+20;
+  x=c.getContext('2d');
+  const r=c.height/2;
+  x.fillStyle='rgba(11,12,16,0.78)';
+  x.strokeStyle='rgba(236,234,227,0.16)';x.lineWidth=2;
+  x.beginPath();
+  if(x.roundRect) x.roundRect(2,2,c.width-4,c.height-4,r-2); else x.rect(2,2,c.width-4,c.height-4);
+  x.fill();x.stroke();
+  x.font='600 '+fs+'px "Kode Mono",monospace';
+  try{x.letterSpacing='2px';}catch(e){}
+  x.textBaseline='middle';x.shadowColor='rgba(0,0,0,.85)';x.shadowBlur=5;
+  x.fillStyle='#ECEAE3';
+  x.fillText(texto,pad,c.height/2+1);
+  const t=new THREE.CanvasTexture(c);t.anisotropy=4;t.colorSpace=THREE.SRGBColorSpace;
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthWrite:false,fog:false}));
+  const k=0.035;
+  s.scale.set(c.width*k,c.height*k,1);s.renderOrder=5;
+  return s;
+}
+function materialNodo(hex){
+  const mat=new THREE.MeshBasicNodeMaterial();
+  const uAmp=uniform(0.06),uBright=uniform(1.15),uPhase=uniform(Math.random()*6.28);
+  mat.colorNode=color(hex).mul(uBright).mul(
+    float(1).sub(uAmp).add(uAmp.mul(float(0.5).add(float(0.5).mul(sin(time.mul(float(1.4)).add(uPhase)))))));
+  mat.userData={uAmp,uBright};
+  return mat;
+}
+
+// ================= LAYOUT FRACTAL (todo desplegado) =================
+const POSA={};
+POSA['cerebro']=new THREE.Vector3(0,0,0);
+const secs=NODOS['cerebro'].hijos;
+secs.forEach((s,i)=>{ const a=(i/secs.length)*Math.PI*2-Math.PI/2;
+  POSA[s]=new THREE.Vector3(Math.cos(a)*34,0,Math.sin(a)*34); });
+for(const id of Object.keys(NODOS)){
+  if(PROF[id]===2){ const p=PADRE[id],sib=NODOS[p].hijos,j=sib.indexOf(id);
+    const a=(j/sib.length)*Math.PI*2;
+    POSA[id]=POSA[p].clone().add(new THREE.Vector3(Math.cos(a)*11.5,0,Math.sin(a)*11.5)); }
+  if(PROF[id]===3){ const p=PADRE[id],sib=NODOS[p].hijos,j=sib.indexOf(id);
+    const a=(j/sib.length)*Math.PI*2+0.5;
+    POSA[id]=POSA[p].clone().add(new THREE.Vector3(Math.cos(a)*5.8,0,Math.sin(a)*5.8)); }
+}
+const RAD=[3.4,2.0,1.05,0.72];
+
+// ================= NODOS =================
+const mallas={}, orden=Object.keys(NODOS);
+for(const id of orden){
+  const n=NODOS[id],prof=PROF[id],r=RAD[Math.min(prof,3)];
+  const mat=materialNodo(n.color);
+  const m=new THREE.Mesh(new THREE.SphereGeometry(1,20,20),mat);
+  m.scale.setScalar(r);
+  m.position.copy(POSA[id]);
+  const halo=new THREE.Sprite(new THREE.SpriteMaterial({map:GLOW,color:n.color,transparent:true,
+    opacity:0.24,depthWrite:false,fog:false,blending:THREE.AdditiveBlending}));
+  const hs=r*8;
+  halo.scale.set(hs,hs,1); halo.position.copy(m.position); halo.renderOrder=4;
+  scene.add(halo);
+  const lab=etiquetaMono(n.label, prof===0?34:26);
+  lab.position.set(m.position.x, m.position.y+r+1.8, m.position.z);
+  lab.material.opacity=0;
+  scene.add(lab);
+  const u={id,nombre:n.nombre,color:n.color,halo,etiqueta:lab,
+    uAmp:mat.userData.uAmp,uBright:mat.userData.uBright,
+    state:'normal',r,fase:Math.random()*6.28,delay:Math.random()*1.2};
+  if(id==='cerebro') u.uBright.value=1.5;
+  m.userData=u;
+  scene.add(m); mallas[id]=m;
+}
+
+// ================= ARISTAS + PARTÍCULAS =================
+const aristas=[];
+for(const id of orden) if(id!=='cerebro') aristas.push({a:PADRE[id],b:id});
+{
+  const lp=new Float32Array(aristas.length*6),lc=new Float32Array(aristas.length*6);
+  aristas.forEach((e,i)=>{
+    const pa=POSA[e.a],pb=POSA[e.b],col=hexRgb(NODOS[e.b].color);
+    lp[i*6]=pa.x;lp[i*6+1]=pa.y;lp[i*6+2]=pa.z;
+    lp[i*6+3]=pb.x;lp[i*6+4]=pb.y;lp[i*6+5]=pb.z;
+    for(let k=0;k<2;k++){ lc[i*6+k*3]=col[0]*0.5;lc[i*6+k*3+1]=col[1]*0.5;lc[i*6+k*3+2]=col[2]*0.5; }
+  });
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.BufferAttribute(lp,3));
+  g.setAttribute('color',new THREE.BufferAttribute(lc,3));
+  const lineas=new THREE.LineSegments(g,new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:0.25}));
+  lineas.frustumCulled=false;
+  scene.add(lineas);
+}
+const NP=80;
+const pPos=new Float32Array(NP*3),pT=new Float32Array(NP),pEdge=new Uint16Array(NP);
+for(let i=0;i<NP;i++){ pEdge[i]=(Math.random()*aristas.length)|0; pT[i]=Math.random(); }
+const pGeo=new THREE.BufferGeometry();
+pGeo.setAttribute('position',new THREE.BufferAttribute(pPos,3));
+const puntos=new THREE.Points(pGeo,new THREE.PointsMaterial({color:0xffe6b3,size:0.9,transparent:true,
+ opacity:0.7,depthWrite:false,blending:THREE.AdditiveBlending}));
+puntos.frustumCulled=false; scene.add(puntos);
+
+// ================= POSTPROCESADO / CONTROLES =================
+const renderPipeline=new THREE.RenderPipeline(renderer);
+const scenePass=pass(scene,camera);
+const scenePassColor=scenePass.getTextureNode('output');
+const bloomPass=bloom(scenePassColor,0.26,0.55,0.8);
+renderPipeline.outputNode=scenePassColor.add(bloomPass);
+const controls=new OrbitControls(camera,renderer.domElement);
+controls.target.set(0,0,0);
+controls.enableDamping=true;controls.dampingFactor=0.06;
+controls.enablePan=false;
+controls.autoRotate=!reducido;controls.autoRotateSpeed=0.35;
+controls.minDistance=40;controls.maxDistance=520;
+controls.maxPolarAngle=Math.PI*0.72;controls.minPolarAngle=Math.PI*0.18;
+controls.update();
+let idleTimer=null;
+canvas.addEventListener('pointerdown',()=>{ controls.autoRotate=false; if(idleTimer) clearTimeout(idleTimer); });
+canvas.addEventListener('pointerup',()=>{ if(idleTimer) clearTimeout(idleTimer);
+  if(!reducido) idleTimer=setTimeout(()=>controls.autoRotate=true,8000); });
+
+// ================= INTERACCIÓN =================
+const ray=new THREE.Raycaster(),raton=new THREE.Vector2();
+const detalleEl=document.getElementById('detalle');
+let movido=0;
+function pick(e){
+  raton.x=(e.clientX/innerWidth)*2-1; raton.y=-(e.clientY/innerHeight)*2+1;
+  ray.setFromCamera(raton,camera);
+  const hit=ray.intersectObjects(orden.map(id=>mallas[id]),false)[0];
+  return hit?hit.object.userData.id:null;
+}
+function mostrarDetalle(id){
+  const n=NODOS[id];
+  document.getElementById('d-nombre').innerHTML=`<span class="dot" style="background:${n.color}"></span>${n.nombre}`;
+  document.getElementById('d-desc').textContent=n.desc||'';
+  document.getElementById('d-meta').textContent=n.hijos.length?n.hijos.length+' SUBNODOS':'NODO FINAL';
+  detalleEl.classList.remove('vis'); void detalleEl.offsetWidth; detalleEl.classList.add('vis');
+}
+document.getElementById('d-cerrar').onclick=()=>detalleEl.classList.remove('vis');
+canvas.addEventListener('pointermove',e=>{ movido+=Math.abs(e.movementX||0)+Math.abs(e.movementY||0); });
+canvas.addEventListener('pointerup',e=>{
+  if(movido<8){ const id=pick(e); if(id) mostrarDetalle(id); else detalleEl.classList.remove('vis'); }
+});
+canvas.addEventListener('pointerdown',()=>{ movido=0; });
+
+// ================= HUD / MENSAJES =================
+function tickReloj(){ const f=new Date();
+  document.getElementById('reloj').textContent=String(f.getHours()).padStart(2,'0')+':'+String(f.getMinutes()).padStart(2,'0'); }
+tickReloj(); setInterval(tickReloj,15000);
+addEventListener('message',e=>{
+  if(e.origin!==location.origin||!e.data) return;
+  if(e.data.type==='nassar-descs'&&e.data.descs){
+    for(const id in mallas){ const t=e.data.descs[mallas[id].userData.nombre];
+      if(t){ mallas[id].userData.desc=t; NODOS[id].desc=t; } }
+  }
+});
+if(window.__nassarQ&&window.__nassarQ.length) window.__nassarQ.splice(0).forEach(()=>{});
+
+// ================= BUCLE =================
+function resize(){ camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight); }
+addEventListener('resize',resize); resize();
+const clock=new THREE.Clock();
+const camStart=new THREE.Vector3(0,220,460);
+camera.position.copy(reducido?new THREE.Vector3(0,130,280):camStart);
+let introT=reducido?1:0,primerFrame=true;
+renderer.setAnimationLoop(()=>{
+  const dt=Math.min(clock.getDelta(),0.05),t=clock.elapsedTime;
+  if(introT<1){
+    introT=Math.min(1,introT+dt/3.2);
+    const k=easeInOutCubic(introT);
+    camera.position.lerpVectors(camStart,new THREE.Vector3(0,130,280),k);
+    camera.lookAt(0,0,0);
+    if(introT>=1) controls.enabled=true;
+  } else if(!controls.enabled) controls.enabled=true;
+  controls.update();
+  for(const id of orden){
+    const m=mallas[id],u=m.userData;
+    const s=easeOutBack(clamp01((t-u.delay)/0.6));
+    m.scale.setScalar(Math.max(0.0001,u.r*s));
+    if(!reducido){
+      m.position.set(POSA[id].x+Math.sin(t*0.7+u.fase)*0.3, POSA[id].y, POSA[id].z+Math.cos(t*0.55+u.fase)*0.3);
+    }
+    u.halo.position.copy(m.position);
+    u.etiqueta.position.set(m.position.x, m.position.y+u.r+1.6, m.position.z);
+    u.etiqueta.material.opacity=clamp01((t-u.delay-0.3)/0.5);
+  }
+  for(let i=0;i<NP;i++){
+    pT[i]+=dt*0.18;
+    if(pT[i]>1){ pT[i]=0; pEdge[i]=(Math.random()*aristas.length)|0; }
+    const e=aristas[pEdge[i]],k=pT[i];
+    const pa=mallas[e.a].position,pb=mallas[e.b].position;
+    pPos[i*3]=pa.x+(pb.x-pa.x)*k;
+    pPos[i*3+1]=pa.y+(pb.y-pa.y)*k;
+    pPos[i*3+2]=pa.z+(pb.z-pa.z)*k;
+  }
+  pGeo.attributes.position.needsUpdate=true;
+  renderPipeline.render();
+  if(primerFrame){ primerFrame=false;
+    setTimeout(()=>{ document.getElementById('intro').style.opacity='0'; },350); }
+});
+</script>
+</body>
+</html>
