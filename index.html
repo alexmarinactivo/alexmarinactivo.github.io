@@ -211,6 +211,8 @@ async function cargar(){
     $('act').textContent='actualizado '+f.toLocaleString('es-ES',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
     const fr=$('f-cerebro');
     if(fr&&fr.contentWindow){ fr.contentWindow.postMessage({type:'nassar-descs',descs:data.descs||{}},'*'); fr.contentWindow.postMessage({type:'nassar-misiones',misiones:data.misiones||[]},'*'); fr.contentWindow.postMessage({type:'nassar-resumen',ahora:data.ahora||'',ultimo:data.ultimo||[]},'*'); }
+    const fo=$('f-organismo');
+    if(fo&&fo.contentWindow){ fo.contentWindow.postMessage({type:'nassar-resumen',ahora:data.ahora||'',ultimo:data.ultimo||[]},'*'); }
   }catch(e){
     err.textContent='No puedo actualizar ahora. Reabre la app con internet.';
     err.style.display='block';
