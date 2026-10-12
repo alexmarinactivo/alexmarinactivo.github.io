@@ -112,24 +112,7 @@ const GRUPOS = [
 ];
 const CENTRO = { nombre:"CEREBRO", desc:"Nassar Intelligence: tu agente personal. Este cerebro alimenta a las 5 secciones y lo orquesta todo. Tú solo decides lo imprescindible.", color:"#FFD54F" };
 
-// Cross-links con razón semántica real (según data.json):
-// El Consejo debate las decisiones importantes -> el producto (misión principal) y las misiones de dinero
-// Radar IA caza herramientas -> la Bóveda las guarda -> el Laboratorio las prueba
-// La Memoria alimenta al CEREBRO · El Navegador opera webs para la Investigación
-// La Privacidad rige cómo navego por ti y protege a la Familia · Vinted genera ingresos -> Finanzas
-// La Dieta de información (reviso y resumo) es Investigación
-const CROSS = [
-  ["El Consejo","Producto nuevo"],
-  ["El Consejo","Misiones de dinero"],
-  ["Radar IA","Bóveda"],
-  ["Bóveda","Laboratorio"],
-  ["Memoria","CEREBRO"],
-  ["Navegador","Investigación"],
-  ["Privacidad","Navegador"],
-  ["Vinted","Finanzas"],
-  ["Familia","Privacidad"],
-  ["Dieta de información","Investigación"],
-];
+
 // Misiones (index.html) -> nodo que las representa
 const MAPA_MISIONES = {
   "Misión ganancias":"Producto nuevo",
@@ -183,119 +166,9 @@ function glowTex(){
 }
 const GLOW = glowTex();
 
-function nebulaTex(){
-  const c=document.createElement('canvas'); c.width=1024; c.height=512;
-  const x=c.getContext('2d');
-  x.fillStyle='#04060c'; x.fillRect(0,0,1024,512);
-  const tonos=['10,22,51','26,16,51','10,42,51','20,14,44','8,30,58'];
-  for(let i=0;i<46;i++){
-    const px=Math.random()*1024, py=Math.random()*512, r=90+Math.random()*220;
-    const g=x.createRadialGradient(px,py,0,px,py,r);
-    const t=tonos[(Math.random()*tonos.length)|0];
-    g.addColorStop(0,`rgba(${t},${0.10+Math.random()*0.10})`);
-    g.addColorStop(1,`rgba(${t},0)`);
-    x.fillStyle=g; x.beginPath(); x.arc(px,py,r,0,7); x.fill();
-  }
-  // unas vetas doradas/cian muy tenues, casi subliminales
-  for(let i=0;i<10;i++){
-    const px=Math.random()*1024, py=Math.random()*512, r=40+Math.random()*90;
-    const g=x.createRadialGradient(px,py,0,px,py,r);
-    const col = Math.random()<0.5 ? '255,213,79' : '77,208,225';
-    g.addColorStop(0,`rgba(${col},0.05)`); g.addColorStop(1,`rgba(${col},0)`);
-    x.fillStyle=g; x.beginPath(); x.arc(px,py,r,0,7); x.fill();
-  }
-  const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; return t;
-}
-
-function gridTex(){
-  const S=1024, c=document.createElement('canvas'); c.width=c.height=S;
-  const x=c.getContext('2d'); const cx=S/2, cy=S/2;
-  x.strokeStyle='rgba(120,200,255,0.55)'; x.lineWidth=1.4;
-  for(let r=64;r<=512;r+=64){ x.beginPath(); x.arc(cx,cy,r,0,7); x.stroke(); }
-  for(let i=0;i<24;i++){ const a=i/24*Math.PI*2;
-    x.beginPath(); x.moveTo(cx+Math.cos(a)*64, cy+Math.sin(a)*64);
-    x.lineTo(cx+Math.cos(a)*512, cy+Math.sin(a)*512); x.stroke(); }
-  // ticks exteriores
-  x.lineWidth=3;
-  for(let i=0;i<72;i++){ const a=i/72*Math.PI*2;
-    x.beginPath(); x.moveTo(cx+Math.cos(a)*492, cy+Math.sin(a)*492);
-    x.lineTo(cx+Math.cos(a)*512, cy+Math.sin(a)*512); x.stroke(); }
-  // fundido radial
-  x.globalCompositeOperation='destination-in';
-  const g=x.createRadialGradient(cx,cy,0,cx,cy,512);
-  g.addColorStop(0,'rgba(0,0,0,0.9)'); g.addColorStop(0.55,'rgba(0,0,0,0.55)'); g.addColorStop(1,'rgba(0,0,0,0)');
-  x.fillStyle=g; x.fillRect(0,0,S,S);
-  return new THREE.CanvasTexture(c);
-}
-
-function shaftTex(){
-  const c=document.createElement('canvas'); c.width=64; c.height=256;
-  const x=c.getContext('2d');
-  const g=x.createLinearGradient(0,0,0,256);
-  g.addColorStop(0,'rgba(255,240,200,0)'); g.addColorStop(0.45,'rgba(255,240,200,0.55)');
-  g.addColorStop(0.62,'rgba(255,240,200,0.28)'); g.addColorStop(1,'rgba(255,240,200,0)');
-  x.fillStyle=g; x.fillRect(0,0,64,256);
-  return new THREE.CanvasTexture(c);
-}
-
-// ================= FONDO: nebulosa, estrellas, retícula, haz =================
-const nebulosa = new THREE.Mesh(
-  new THREE.SphereGeometry(300, 32, 32),
-  new THREE.MeshBasicMaterial({ map:nebulaTex(), side:THREE.BackSide, fog:false, depthWrite:false })
-);
-scene.add(nebulosa);
-
-function capaEstrellas(n, rMin, rMax, tam, op){
-  const pos=new Float32Array(n*3), col=new Float32Array(n*3);
-  for(let i=0;i<n;i++){
-    const r=rMin+Math.random()*(rMax-rMin);
-    const th=Math.random()*Math.PI*2, ph=Math.acos(2*Math.random()-1);
-    pos[i*3]=r*Math.sin(ph)*Math.cos(th); pos[i*3+1]=r*Math.cos(ph)*0.7; pos[i*3+2]=r*Math.sin(ph)*Math.sin(th);
-    const t=Math.random(); // blanco / azulado / dorado tenue
-    const cc = t<0.6 ? [1,1,1] : (t<0.85 ? [0.7,0.85,1] : [1,0.9,0.7]);
-    const b=0.35+Math.random()*0.65;
-    col[i*3]=cc[0]*b; col[i*3+1]=cc[1]*b; col[i*3+2]=cc[2]*b;
-  }
-  const g=new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.BufferAttribute(pos,3));
-  g.setAttribute('color', new THREE.BufferAttribute(col,3));
-  const p=new THREE.Points(g, new THREE.PointsMaterial({ size:tam, vertexColors:true, transparent:true,
-    opacity:op, depthWrite:false, fog:false, sizeAttenuation:true }));
-  scene.add(p); return p;
-}
-const estrellas1 = capaEstrellas(650, 200, 280, 1.5, 0.85);
-const estrellas2 = capaEstrellas(280, 150, 200, 2.4, 0.7);
-
-const reticula = new THREE.Mesh(
-  new THREE.CircleGeometry(100, 72),
-  new THREE.MeshBasicMaterial({ map:gridTex(), transparent:true, opacity:0.17,
-    blending:THREE.AdditiveBlending, depthWrite:false, fog:false, color:0x9fd4ff })
-);
-reticula.rotation.x = -Math.PI/2; reticula.position.y = -10;
-scene.add(reticula);
-
-const haz = new THREE.Mesh(
-  new THREE.CylinderGeometry(3.2, 5.2, 64, 20, 1, true),
-  new THREE.MeshBasicMaterial({ map:shaftTex(), transparent:true, opacity:0.08,
-    blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide, fog:false })
-);
-haz.position.y = 12;
-scene.add(haz);
-
-// Anillos de planetario alrededor del conjunto
-function anilloPlanetario(radio, tubo, colr, op, tiltX, tiltZ){
-  const m=new THREE.Mesh(new THREE.TorusGeometry(radio, tubo, 8, 200),
-    new THREE.MeshBasicMaterial({ color:colr, transparent:true, opacity:op, fog:false, depthWrite:false }));
-  const g=new THREE.Group(); g.add(m); g.rotation.x=tiltX; g.rotation.z=tiltZ;
-  scene.add(g); return g;
-}
-const anilloP1 = anilloPlanetario(60, 0.07, 0xFFD54F, 0.30, 1.15, 0.12);
-const anilloP2 = anilloPlanetario(72, 0.05, 0x4DD0E1, 0.18, 1.30, -0.28);
-
-// ================= MATERIALES TSL =================
 function materialNodo(hex){
   const mat = new THREE.MeshBasicNodeMaterial();
-  const uAmp = uniform(0.16), uBright = uniform(1.55), uPhase = uniform(Math.random()*6.28);
+  const uAmp = uniform(0.10), uBright = uniform(1.18), uPhase = uniform(Math.random()*6.28);
   mat.colorNode = color(hex).mul(uBright).mul(
     float(1).sub(uAmp).add(uAmp.mul(float(0.5).add(float(0.5).mul(sin(time.mul(float(1.6)).add(uPhase))))))
   );
@@ -303,17 +176,7 @@ function materialNodo(hex){
   return mat;
 }
 // Tubo de flujo de datos: estelas luminosas que viajan por la arista
-function materialFlujo({ conTinte, colorBase, velocidad, anchoCabeza, base, pico, brillo }){
-  const mat = new THREE.MeshBasicNodeMaterial();
-  mat.transparent = true; mat.blending = THREE.AdditiveBlending;
-  mat.depthWrite = false; mat.fog = false;
-  const d = fract(uv().x.sub(time.mul(float(velocidad))).add(attribute('aPhase')));
-  const cabeza = float(1).sub(smoothstep(float(0), float(anchoCabeza), d));
-  const resplandor = float(base).add(float(pico).mul(cabeza));
-  const tinta = conTinte ? attribute('aTint') : color(colorBase);
-  mat.colorNode = tinta.mul(resplandor).mul(float(brillo));
-  return mat;
-}
+
 
 // ================= NODOS =================
 const POS = {};
@@ -352,7 +215,7 @@ function addNodo(nombre, desc, colr, pos, radio, fsLabel, grande, nacimiento){
   const m = new THREE.Mesh(new THREE.SphereGeometry(radio, 28, 28), mat);
   m.position.copy(pos);
   const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map:GLOW, color:colr, transparent:true,
-    opacity:0.5, depthWrite:false, fog:false, blending:THREE.AdditiveBlending }));
+    opacity:0.35, depthWrite:false, fog:false, blending:THREE.AdditiveBlending }));
   const baseHalo = radio*8.5;
   halo.scale.set(baseHalo, baseHalo, 1);
   halo.position.copy(pos); halo.renderOrder=4;
@@ -377,40 +240,15 @@ function addNodo(nombre, desc, colr, pos, radio, fsLabel, grande, nacimiento){
 // --- cerebro central ---
 const centroPos = new THREE.Vector3(0,0,0);
 addNodo(CENTRO.nombre, CENTRO.desc, CENTRO.color, centroPos, 3.4, 54, true, 0.5);
-nodosPorNombre["CEREBRO"].userData.uBright.value = 1.9;
+nodosPorNombre["CEREBRO"].userData.uBright.value = 1.5;
 // anillos orbitales del núcleo
-const anillosNucleo = [];
-[[5.6,0xFFD54F,0.55,0.5,0.2],[7.2,0xFFE9B0,0.32,0.9,-0.35]].forEach(([r,co,op,tx,tz],i)=>{
-  const an=new THREE.Mesh(new THREE.TorusGeometry(r,0.055,8,140),
-    new THREE.MeshBasicMaterial({ color:co, transparent:true, opacity:op, fog:false, depthWrite:false }));
-  const g=new THREE.Group(); g.add(an); g.rotation.x=tx; g.rotation.z=tz; g.position.copy(centroPos);
-  g.userData.vel = i===0 ? 0.25 : -0.18;
-  scene.add(g); anillosNucleo.push(g);
-});
+
 
 // --- 5 secciones en anillo ---
 const R = 34;
-const anillosHub = [];
 GRUPOS.forEach((g,i)=>{
   const ang=(i/GRUPOS.length)*Math.PI*2 - Math.PI/2;
   const hp=new THREE.Vector3(Math.cos(ang)*R, 0, Math.sin(ang)*R);
-  // plataforma holográfica
-  const disc=new THREE.Mesh(new THREE.CircleGeometry(14.5, 56),
-    new THREE.MeshBasicMaterial({ color:g.color, transparent:true, opacity:0.055, depthWrite:false, fog:false }));
-  disc.rotation.x=-Math.PI/2; disc.position.copy(hp).add(new THREE.Vector3(0,-7.5,0));
-  scene.add(disc);
-  const ring=new THREE.Mesh(new THREE.RingGeometry(14.1, 14.5, 72),
-    new THREE.MeshBasicMaterial({ color:g.color, transparent:true, opacity:0.42, depthWrite:false,
-      side:THREE.DoubleSide, fog:false }));
-  ring.rotation.x=-Math.PI/2; ring.position.copy(disc.position);
-  scene.add(ring);
-  // anillo orbital fino del hub
-  const orb=new THREE.Mesh(new THREE.TorusGeometry(3.8, 0.05, 8, 90),
-    new THREE.MeshBasicMaterial({ color:g.color, transparent:true, opacity:0.5, fog:false, depthWrite:false }));
-  const og=new THREE.Group(); og.add(orb); og.position.copy(hp);
-  og.rotation.x=0.55; og.rotation.z=0.2+i*0.15; og.userData.vel=0.3+i*0.06;
-  scene.add(og); anillosHub.push(og);
-
   addNodo(g.nombre, "Sección: "+g.nombre+". Toca sus nodos para ver cada pieza.", g.color, hp, 2.0, 40, true, 0.9+i*0.18);
   const cartel=etiqueta("SECCIÓN · "+g.nombre.toUpperCase(), g.color, 30, true);
   cartel.position.copy(hp).add(new THREE.Vector3(0, 13.5, 0));
@@ -426,66 +264,45 @@ GRUPOS.forEach((g,i)=>{
   });
 });
 
-// ================= ARISTAS: tubos de flujo =================
-function mergeTubos(items){
-  let vCount=0, iCount=0;
-  for(const it of items){ vCount+=it.geo.attributes.position.count; iCount+=it.geo.index.count; }
-  const pos=new Float32Array(vCount*3), nor=new Float32Array(vCount*3), uvA=new Float32Array(vCount*2);
-  const tint=new Float32Array(vCount*3), phase=new Float32Array(vCount);
-  const idx=new (vCount>65535?Uint32Array:Uint16Array)(iCount);
-  let vo=0, io=0;
-  for(const it of items){
-    const g=it.geo, n=g.attributes.position.count;
-    pos.set(g.attributes.position.array, vo*3);
-    nor.set(g.attributes.normal.array, vo*3);
-    uvA.set(g.attributes.uv.array, vo*2);
-    for(let i=0;i<n;i++){ tint[(vo+i)*3]=it.tint[0]; tint[(vo+i)*3+1]=it.tint[1]; tint[(vo+i)*3+2]=it.tint[2]; phase[vo+i]=it.phase; }
-    const ia=g.index.array;
-    for(let i=0;i<ia.length;i++) idx[io+i]=ia[i]+vo;
-    vo+=n; io+=ia.length; g.dispose();
-  }
-  const geo=new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.BufferAttribute(pos,3));
-  geo.setAttribute('normal', new THREE.BufferAttribute(nor,3));
-  geo.setAttribute('uv', new THREE.BufferAttribute(uvA,2));
-  geo.setAttribute('aTint', new THREE.BufferAttribute(tint,3));
-  geo.setAttribute('aPhase', new THREE.BufferAttribute(phase,1));
-  geo.setIndex(new THREE.BufferAttribute(idx,1));
-  return geo;
-}
-const tubosPrim=[], tubosCross=[];
-function tuboRecto(a,b,r){
-  return new THREE.TubeGeometry(new THREE.LineCurve3(a.clone(), b.clone()), 20, r, 6, false);
-}
-// primarias: el flujo viaja HACIA el centro (a=origen -> b=destino)
+// ================= ARISTAS: líneas finas + partículas viajeras =================
+const aristas=[];
 GRUPOS.forEach(g=>{
-  const hp=POS[g.nombre], t=hexRgb(g.color);
-  tubosPrim.push({ geo:tuboRecto(hp, centroPos, 0.30), tint:t, phase:Math.random() });
-  g.nodos.forEach(([nom])=>{ tubosPrim.push({ geo:tuboRecto(POS[nom], hp, 0.22), tint:t, phase:Math.random() }); });
+  const hp=POS[g.nombre];
+  aristas.push({a:hp,b:centroPos,c:g.color});
+  g.nodos.forEach(([nom])=>{ aristas.push({a:POS[nom],b:hp,c:g.color}); });
 });
-// cross-links: arcos elevados, finos y tenues
-CROSS.forEach(([a,b])=>{
-  const pa=POS[a], pb=POS[b];
-  if(!pa||!pb) return;
-  const mid=pa.clone().add(pb).multiplyScalar(0.5);
-  const ctrl=mid.clone(); ctrl.y+= (a==="CEREBRO"||b==="CEREBRO") ? 12 : 16;
-  const curve=new THREE.QuadraticBezierCurve3(pa.clone(), ctrl, pb.clone());
-  tubosCross.push({ geo:new THREE.TubeGeometry(curve, 42, 0.10, 6, false), tint:[0.55,0.72,0.91], phase:Math.random() });
-});
-const mallaPrim=new THREE.Mesh(mergeTubos(tubosPrim),
-  materialFlujo({ conTinte:true, velocidad:0.30, anchoCabeza:0.30, base:0.30, pico:2.6, brillo:1.0 }));
-mallaPrim.renderOrder=2; mallaPrim.frustumCulled=false;
-scene.add(mallaPrim);
-const mallaCross=new THREE.Mesh(mergeTubos(tubosCross),
-  materialFlujo({ conTinte:true, velocidad:0.18, anchoCabeza:0.20, base:0.20, pico:1.7, brillo:0.55 }));
-mallaCross.renderOrder=2; mallaCross.frustumCulled=false;
-scene.add(mallaCross);
+{
+  const lp=new Float32Array(aristas.length*6), lc=new Float32Array(aristas.length*6);
+  aristas.forEach((e,i)=>{
+    lp[i*6]=e.a.x; lp[i*6+1]=e.a.y; lp[i*6+2]=e.a.z;
+    lp[i*6+3]=e.b.x; lp[i*6+4]=e.b.y; lp[i*6+5]=e.b.z;
+    const cc=hexRgb(e.c);
+    lc[i*6]=cc[0]; lc[i*6+1]=cc[1]; lc[i*6+2]=cc[2];
+    lc[i*6+3]=cc[0]; lc[i*6+4]=cc[1]; lc[i*6+5]=cc[2];
+  });
+  const lg=new THREE.BufferGeometry();
+  lg.setAttribute('position', new THREE.BufferAttribute(lp,3));
+  lg.setAttribute('color', new THREE.BufferAttribute(lc,3));
+  const lineas=new THREE.LineSegments(lg, new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:0.32}));
+  lineas.frustumCulled=false;
+  scene.add(lineas);
+}
+// partículas doradas viajando hacia el centro por las aristas
+const NP=240;
+const pPos=new Float32Array(NP*3), pT=new Float32Array(NP), pEdge=new Uint16Array(NP);
+for(let i=0;i<NP;i++){ pEdge[i]=(Math.random()*aristas.length)|0; pT[i]=Math.random(); }
+const pGeo=new THREE.BufferGeometry();
+pGeo.setAttribute('position', new THREE.BufferAttribute(pPos,3));
+const puntos=new THREE.Points(pGeo, new THREE.PointsMaterial({color:0xffe2a0,size:0.85,transparent:true,
+  opacity:0.8,depthWrite:false,blending:THREE.AdditiveBlending}));
+puntos.frustumCulled=false;
+scene.add(puntos);
 
 // ================= POSTPROCESADO =================
 const renderPipeline = new THREE.RenderPipeline(renderer);
 const scenePass = pass(scene, camera);
 const scenePassColor = scenePass.getTextureNode('output');
-const bloomPass = bloom(scenePassColor, 0.65, 0.55, 0.62); // calibrado: brillo sin quemar
+const bloomPass = bloom(scenePassColor, 0.32, 0.5, 0.78); // suave: solo un velo de luz
 renderPipeline.outputNode = scenePassColor.add(bloomPass);
 
 // ================= CONTROLES =================
@@ -530,9 +347,9 @@ function aplicarEstado(nodo, estado){
   const u=nodo.userData;
   if(estado==='activo' || estado==='en_curso'){
     u.state='hot';
-    u.uAmp.value=0.42; u.uBright.value=2.1;
-    u.halo.scale.set(u.baseHalo*1.7, u.baseHalo*1.7, 1);
-    u.halo.material.opacity=0.8;
+    u.uAmp.value=0.22; u.uBright.value=1.6;
+    u.halo.scale.set(u.baseHalo*1.5, u.baseHalo*1.5, 1);
+    u.halo.material.opacity=0.6;
   } else if(estado==='pendiente'){
     u.state='dim';
     u.uAmp.value=0.05; u.uBright.value=0.7;
@@ -540,7 +357,7 @@ function aplicarEstado(nodo, estado){
     u.halo.material.opacity=0.25;
   } else {
     u.state='normal';
-    u.uAmp.value=0.16; u.uBright.value = (u.nombre==="CEREBRO") ? 1.9 : 1.55;
+    u.uAmp.value=0.10; u.uBright.value = (u.nombre==="CEREBRO") ? 1.5 : 1.18;
     u.halo.scale.set(u.baseHalo, u.baseHalo, 1);
     u.halo.material.opacity=0.5;
   }
@@ -603,19 +420,23 @@ renderer.setAnimationLoop(()=>{
     const s=easeOutBack(clamp01((t-u.nacimiento)/0.6));
     const sc=Math.max(0.0001, s);
     n.scale.setScalar(sc);
-    const foc=(n===focoNodo)?2.1:1;
+    const foc=(n===focoNodo)?1.6:1;
     const hs=Math.max(0.0001, u.baseHalo*(u.state==='hot'?1.7:u.state==='dim'?0.75:1)*foc*s);
     u.halo.scale.set(hs,hs,1);
     if(u.etiqueta) u.etiqueta.material.opacity=clamp01((t-u.nacimiento-0.25)/0.5);
     if(u.etiqueta2) u.etiqueta2.material.opacity=clamp01((t-u.nacimiento-0.25)/0.5);
   }
   // vida ambiental
-  anilloP1.rotation.y+=dt*0.020; anilloP2.rotation.y-=dt*0.014;
-  for(const g of anillosNucleo) g.rotation.y+=dt*g.userData.vel;
-  for(const g of anillosHub) g.rotation.y+=dt*g.userData.vel;
-  reticula.rotation.z+=dt*0.004;
-  estrellas2.rotation.y+=dt*0.0022;
-  haz.material.opacity=0.065+0.022*Math.sin(t*0.8);
+
+  for(let i=0;i<NP;i++){
+    pT[i]+=dt*0.22;
+    if(pT[i]>1){ pT[i]=0; pEdge[i]=(Math.random()*aristas.length)|0; }
+    const e=aristas[pEdge[i]], k=pT[i];
+    pPos[i*3]  =e.a.x+(e.b.x-e.a.x)*k;
+    pPos[i*3+1]=e.a.y+(e.b.y-e.a.y)*k;
+    pPos[i*3+2]=e.a.z+(e.b.z-e.a.z)*k;
+  }
+  pGeo.attributes.position.needsUpdate=true;
   renderPipeline.render();
   if(primerFrame){ primerFrame=false;
     setTimeout(()=>{ document.getElementById('intro').style.opacity='0'; }, 350); }
@@ -641,7 +462,7 @@ function enfocar(nombreMision){
   limpiarFoco();
   const u=n.userData;
   u._snap={amp:u.uAmp.value, bright:u.uBright.value, hop:u.halo.material.opacity};
-  u.uAmp.value=0.5; u.uBright.value=2.6; u.halo.material.opacity=0.95;
+  u.uAmp.value=0.28; u.uBright.value=1.8; u.halo.material.opacity=0.7;
   focoNodo=n;
   mostrar(n);
   const dir=camera.position.clone().sub(controls.target).normalize();
