@@ -361,18 +361,52 @@ function materialNodo(hex){
   mat.userData={uAmp,uBright};
   return mat;
 }
+// ================= PERSONAS (en vez de puntos) =================
+const GEO_P = {
+  cabeza: new THREE.SphereGeometry(0.24, 14, 14),
+  cuerpo: new THREE.CapsuleGeometry(0.20, 0.55, 4, 10),
+  mesa: new THREE.BoxGeometry(1.15, 0.09, 0.6),
+  pata: new THREE.BoxGeometry(0.08, 0.55, 0.5),
+  monitor: new THREE.BoxGeometry(0.52, 0.40, 0.07),
+  pantalla: new THREE.PlaneGeometry(0.46, 0.34),
+  asiento: new THREE.BoxGeometry(0.44, 0.09, 0.44),
+  respaldo: new THREE.BoxGeometry(0.44, 0.55, 0.09)
+};
+const MAT_MESA = new THREE.MeshBasicNodeMaterial({color: 0x2b2e35});
+const MAT_MON = new THREE.MeshBasicNodeMaterial({color: 0x14161b});
+function crearPersona(matColor){
+  const g = new THREE.Group();
+  const p = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); g.add(m); return m; };
+  p(GEO_P.asiento, MAT_MESA, 0, 0.28, -0.28);
+  p(GEO_P.respaldo, MAT_MESA, 0, 0.58, -0.50);
+  p(GEO_P.cuerpo, matColor, 0, 0.68, -0.28);
+  p(GEO_P.cabeza, matColor, 0, 1.28, -0.28);
+  p(GEO_P.mesa, MAT_MESA, 0, 0.58, 0.35);
+  p(GEO_P.pata, MAT_MESA, -0.50, 0.28, 0.35);
+  p(GEO_P.pata, MAT_MESA, 0.50, 0.28, 0.35);
+  p(GEO_P.monitor, MAT_MON, 0, 0.88, 0.35);
+  const pant = p(GEO_P.pantalla, matColor, 0, 0.88, 0.395);
+  pant.rotation.y = Math.PI;
+  g.rotation.y = Math.random() * Math.PI * 2;
+  return g;
+}
+
 
 // ================= NODOS (pool persistente) =================
 const mallas={}, orden=[];
 for(const id in NODOS){
   const n=NODOS[id];
   const mat=materialNodo(n.color);
+  mat.transparent = true; mat.opacity = 0.10;
   const m=new THREE.Mesh(new THREE.SphereGeometry(1,26,26),mat);
+  const matPersona=materialNodo(n.color);
+  const persona = crearPersona(matPersona);
+  m.add(persona);
   const halo=new THREE.Sprite(new THREE.SpriteMaterial({map:GLOW,color:n.color,transparent:true,
     opacity:0.26,depthWrite:false,fog:false,blending:THREE.AdditiveBlending}));
   halo.renderOrder=4; scene.add(halo);
   const lab=etiquetaMono(n.label); lab.material.opacity=0; scene.add(lab);
-  const u={id,nombre:n.nombre,color:n.color,halo,etiqueta:lab,
+  const u={id,nombre:n.nombre,color:n.color,halo,etiqueta:lab,persona,
     uAmp:mat.userData.uAmp,uBright:mat.userData.uBright,
     state:'normal',r:0.0001,rT:0,base:new THREE.Vector3(),baseT:new THREE.Vector3(),
     fase:Math.random()*6.28,delay:0,navT:-10};
@@ -644,7 +678,7 @@ renderer.setAnimationLoop(()=>{
     u.base.lerp(u.baseT,Math.min(1,dt*4));
     const s=easeOutBack(clamp01((t-u.navT-u.delay)/0.55));
     const rr=Math.max(0.0001,u.r*Math.max(0.0001,s));
-    m.scale.setScalar(rr);
+    m.scale.setScalar(rr); if(u.persona) u.persona.visible = u.vis && rr > 0.08;
     const fx=reducido?0:Math.sin(t*0.8+u.fase)*0.35;
     const fz=reducido?0:Math.cos(t*0.6+u.fase)*0.35;
     m.position.set(u.base.x+fx,u.base.y,u.base.z+fz);
