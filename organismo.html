@@ -46,7 +46,7 @@ html,body{height:100%;margin:0;overflow:hidden;background:radial-gradient(120% 9
 <div class="hud" id="marca">NASSAR·OS</div>
 <div class="hud" id="envivo">EN VIVO<div id="reloj">--:--</div></div>
 
-<div class="hud" id="ayuda">toca un satélite para entrar · arrastra para girar · pellizca para acercar</div>
+<div class="hud" id="ayuda">todo cómo trabajo, desplegado · arrastra para girar · pellizca para acercar</div>
 <div id="migas"></div>
 <button id="atras" aria-label="Atrás">‹</button>
 <div id="detalle"><button id="d-cerrar">×</button><div id="d-nombre"></div><div id="d-desc"></div><div id="d-meta"></div></div>
@@ -141,9 +141,9 @@ const scene=new THREE.Scene();
   const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace;
   scene.background=t;
 })();
-scene.fog=new THREE.FogExp2(0x17181c,0.006);
+scene.fog=new THREE.FogExp2(0x17181c,0.0022);
 const camera=new THREE.PerspectiveCamera(50,innerWidth/innerHeight,0.1,1500);
-camera.position.set(0,90,195); camera.lookAt(0,0,0);
+camera.position.set(0,150,330); camera.lookAt(0,0,0);
 
 /* ===== utilidades ===== */
 const clamp01=t=>Math.max(0,Math.min(1,t));
@@ -193,205 +193,105 @@ function nodo3d(hex,radio,esCentro){
   return {m,mat,halo,base,hs};
 }
 
-/* ================= MOTOR: mapa explorable ================= */
+/* ================= MOTOR: vista avión (todo desplegado) ================= */
 const PADRE={};
 for(const id in NODOS) for(const h of NODOS[id].hijos) PADRE[h]=id;
-const CENTRO='yo';
-const CAMD=[[0,90,195],[0,52,118],[0,30,70]];
+const PROF={};
+for(const id of Object.keys(NODOS)) PROF[id]=id==='yo'?0:PROF[PADRE[id]]+1;
+const POSA={};
+POSA['yo']=new THREE.Vector3(0,0,0);
+NODOS['yo'].hijos.forEach((s,i)=>{ const a=(i/NODOS['yo'].hijos.length)*Math.PI*2-Math.PI/2;
+  POSA[s]=new THREE.Vector3(Math.cos(a)*37,0,Math.sin(a)*37); });
+const RADIO_NIVEL={2:11.5,3:5.8};
+for(const id of Object.keys(NODOS)){
+  const p=PROF[id];
+  if(p>=2){ const par=PADRE[id], sib=NODOS[par].hijos, j=sib.indexOf(id);
+    const rr=RADIO_NIVEL[p]||3.4;
+    const a=(j/sib.length)*Math.PI*2+p*0.5;
+    POSA[id]=POSA[par].clone().add(new THREE.Vector3(Math.cos(a)*rr,0,Math.sin(a)*rr)); }
+}
+const RAD=[3.4,2.0,1.05,0.72,0.55];
 
 const mallas={}, orden=Object.keys(NODOS);
 for(const id of orden){
-  const n=NODOS[id], esC=id===CENTRO, r=esC?3.4:2.0;
+  const n=NODOS[id], prof=PROF[id], esC=id==='yo', r=RAD[Math.min(prof,4)];
   const nd=nodo3d(n.color,r,esC);
   const m=nd.m;
-  m.position.set(0,-80,0); m.visible=false;
+  m.position.copy(POSA[id]||new THREE.Vector3());
   const lab=etiqueta(n.label,esC?34:26);
-  lab.position.set(0,-80,0); lab.material.opacity=0; lab.visible=false;
-  nd.halo.position.set(0,-80,0); nd.halo.visible=false;
-  scene.add(lab); scene.add(nd.halo);
+  lab.position.set(m.position.x,m.position.y+r+1.8,m.position.z);
+  lab.material.opacity=0;
+  scene.add(lab);
+  nd.halo.position.copy(m.position);
+  scene.add(nd.halo);
   const u={id,nombre:n.nombre,mat:nd.mat,base:nd.base,halo:nd.halo,etiqueta:lab,r,
-    fase:Math.random()*6.28,dim:0.92,hop:0.22,vis:false,dest:new THREE.Vector3(0,-80,0)};
+    fase:Math.random()*6.28,hop:0.22,delay:Math.random()*1.2};
   m.userData=u; scene.add(m); mallas[id]=m;
 }
-
-let path=[], focoId=CENTRO, hijos=[], tween=null, visSet=new Set();
-const ray=new THREE.Raycaster(), raton=new THREE.Vector2();
-const detalleEl=document.getElementById('detalle');
-const migasEl=document.getElementById('migas');
-const atrasBtn=document.getElementById('atras');
-function hijosDe(id){ return (NODOS[id].hijos||[]).filter(h=>NODOS[h]); }
-
-/* ---- aristas ---- */
-let lineas=null, lineGeo=null, linePos=null, aristas=[];
-function reconstruirAristas(){
-  aristas=[];
-  for(const id of orden){
-    if(!visSet.has(id)||id===focoId) continue;
-    const p=PADRE[id];
-    if(p&&visSet.has(p)) aristas.push([p,id]);
-  }
-  if(lineas){ scene.remove(lineas); lineGeo.dispose(); lineas.material.dispose(); }
-  linePos=new Float32Array(Math.max(aristas.length,1)*6);
-  const lc=new Float32Array(Math.max(aristas.length,1)*6);
+/* aristas */
+const aristas=[];
+for(const id of orden) if(id!=='yo') aristas.push([PADRE[id],id]);
+{
+  const lp=new Float32Array(aristas.length*6), lc=new Float32Array(aristas.length*6);
   aristas.forEach((e,i)=>{
-    const c=hexRgb(NODOS[e[1]].color);
-    for(let k=0;k<2;k++){ lc[i*6+k*3]=c[0]*0.45; lc[i*6+k*3+1]=c[1]*0.45; lc[i*6+k*3+2]=c[2]*0.45; }
+    const pa=POSA[e[0]]||new THREE.Vector3(), pb=POSA[e[1]]||new THREE.Vector3(), c=hexRgb(NODOS[e[1]].color);
+    lp[i*6]=pa.x;lp[i*6+1]=pa.y;lp[i*6+2]=pa.z;lp[i*6+3]=pb.x;lp[i*6+4]=pb.y;lp[i*6+5]=pb.z;
+    for(let k=0;k<2;k++){ lc[i*6+k*3]=c[0]*0.4;lc[i*6+k*3+1]=c[1]*0.4;lc[i*6+k*3+2]=c[2]*0.4; }
   });
-  lineGeo=new THREE.BufferGeometry();
-  lineGeo.setAttribute('position',new THREE.BufferAttribute(linePos,3));
-  lineGeo.setAttribute('color',new THREE.BufferAttribute(lc,3));
-  lineas=new THREE.LineSegments(lineGeo,new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:0.28}));
-  lineas.frustumCulled=false; lineas.visible=aristas.length>0;
-  scene.add(lineas);
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.BufferAttribute(lp,3));
+  g.setAttribute('color',new THREE.BufferAttribute(lc,3));
+  const lineas=new THREE.LineSegments(g,new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:0.25}));
+  lineas.frustumCulled=false; scene.add(lineas);
 }
-function actualizarAristas(){
-  if(!lineas||!aristas.length) return;
-  aristas.forEach((e,i)=>{
-    const a=mallas[e[0]].position, b=mallas[e[1]].position;
-    linePos[i*6]=a.x; linePos[i*6+1]=a.y; linePos[i*6+2]=a.z;
-    linePos[i*6+3]=b.x; linePos[i*6+4]=b.y; linePos[i*6+5]=b.z;
-  });
-  lineGeo.attributes.position.needsUpdate=true;
-}
-/* ---- partículas doradas ---- */
-const NP=70;
+/* partículas */
+const NP=80;
 const pPos=new Float32Array(NP*3), pT=new Float32Array(NP), pEdge=new Uint16Array(NP);
+for(let i=0;i<NP;i++){ pEdge[i]=(Math.random()*aristas.length)|0; pT[i]=Math.random(); }
 const pGeo=new THREE.BufferGeometry();
 pGeo.setAttribute('position',new THREE.BufferAttribute(pPos,3));
-const puntos=new THREE.Points(pGeo,new THREE.PointsMaterial({color:0xffe6b3,size:0.85,transparent:true,
+const puntos=new THREE.Points(pGeo,new THREE.PointsMaterial({color:0xffe6b3,size:0.9,transparent:true,
   opacity:0.7,depthWrite:false,blending:THREE.AdditiveBlending}));
 puntos.frustumCulled=false; scene.add(puntos);
-function resetParticulas(){
-  for(let i=0;i<NP;i++){ pEdge[i]=aristas.length?(Math.random()*aristas.length)|0:0; pT[i]=Math.random(); }
-}
-function actualizarParticulas(dt){
-  for(let i=0;i<NP;i++){
-    pT[i]+=dt*0.22;
-    if(pT[i]>1){ pT[i]=0; if(aristas.length) pEdge[i]=(Math.random()*aristas.length)|0; }
-    const e=aristas[pEdge[i]], k=pT[i];
-    if(!e){ pPos[i*3+1]=-80; continue; }
-    const pa=mallas[e[0]].position, pb=mallas[e[1]].position;
-    pPos[i*3]=pa.x+(pb.x-pa.x)*k; pPos[i*3+1]=pa.y+(pb.y-pa.y)*k; pPos[i*3+2]=pa.z+(pb.z-pa.z)*k;
-  }
-  pGeo.attributes.position.needsUpdate=true;
-}
 
-/* ---- navegación ---- */
-function aplicarEstado(){
-  for(const id of orden){
-    const u=mallas[id].userData;
-    const esFoco=id===focoId, esHijo=hijos.indexOf(id)>=0;
-    let dim,hop;
-    if(esFoco){ dim=1.0; hop=0.30; }
-    else if(esHijo){ dim=1.0; hop=0.24; }
-    else if(visSet.has(id)){ dim=0.85; hop=0.18; }
-    else { dim=0.5; hop=0.08; }
-    u.dim=dim; u.hop=hop;
-    u.mat.color.copy(u.base).multiplyScalar(dim);
-  }
-}
-function renderMigas(){
-  const items=[CENTRO].concat(path);
-  migasEl.innerHTML=items.map(id=>'<span class="miga">'+NODOS[id].label+'</span>').join('');
-  atrasBtn.style.display=path.length?'flex':'none';
-}
+/* controles */
 const controls=new OrbitControls(camera,renderer.domElement);
 controls.target.set(0,0,0);
 controls.enableDamping=true; controls.dampingFactor=0.06;
 controls.enablePan=false;
-controls.minDistance=30; controls.maxDistance=420;
+controls.autoRotate=true; controls.autoRotateSpeed=0.35;
+controls.minDistance=40; controls.maxDistance=520;
 controls.maxPolarAngle=Math.PI*0.72; controls.minPolarAngle=Math.PI*0.18;
-let camTween=null;
-function moverCamara(d){
-  const to=new THREE.Vector3(d[0],d[1],d[2]);
-  const from=camera.position.clone(), t0=performance.now(), DUR=1100;
-  if(camTween) cancelAnimationFrame(camTween);
-  const step=(t)=>{
-    const k=easeInOutCubic(clamp01((t-t0)/DUR));
-    camera.position.lerpVectors(from,to,k);
-    camera.lookAt(0,0,0);
-    if(k<1) camTween=requestAnimationFrame(step); else camTween=null;
-  };
-  camTween=requestAnimationFrame(step);
-}
-function navegar(nuevoPath,animar=true){
-  path=nuevoPath.slice();
-  focoId=path.length?path[path.length-1]:CENTRO;
-  hijos=hijosDe(focoId);
-  visSet=new Set([focoId].concat(hijos));
-  const nietos=[];
-  for(const h of hijos) for(const n2 of hijosDe(h)) if(!visSet.has(n2)){ visSet.add(n2); nietos.push(n2); }
-  let padreId=null;
-  if(path.length){ padreId=path.length>1?path[path.length-2]:CENTRO; if(padreId!==focoId) visSet.add(padreId); }
-  const R=hijos.length<=1?18:Math.min(36,16+hijos.length*3.4);
-  const dest={};
-  dest[focoId]=new THREE.Vector3(0,0,0);
-  hijos.forEach((h,i)=>{ const a=(i/hijos.length)*Math.PI*2-Math.PI/2;
-    dest[h]=new THREE.Vector3(Math.cos(a)*R,0,Math.sin(a)*R); });
-  const porPadre={};
-  for(const n2 of nietos){ const p=PADRE[n2]; (porPadre[p]=porPadre[p]||[]).push(n2); }
-  for(const p in porPadre){
-    if(!dest[p]) continue;
-    const lista=porPadre[p], nr=Math.min(9,4.5+lista.length*1.2);
-    lista.forEach((n2,j)=>{ const a=(j/lista.length)*Math.PI*2+0.7;
-      dest[n2]=dest[p].clone().add(new THREE.Vector3(Math.cos(a)*nr,0,Math.sin(a)*nr)); });
-  }
-  if(padreId&&!dest[padreId]) dest[padreId]=new THREE.Vector3(0,0,-R*1.6);
-  const desde={};
-  for(const id of orden) desde[id]=mallas[id].position.clone();
-  for(const id of orden){ mallas[id].userData.dest=dest[id]||new THREE.Vector3(0,-80,0); }
-  const t0=performance.now(), DUR=animar?850:1;
-  if(tween) cancelAnimationFrame(tween);
-  const paso=(t)=>{
-    const k=easeInOutCubic(clamp01((t-t0)/DUR));
-    for(const id of orden){
-      const m=mallas[id], u=m.userData, d=u.dest;
-      const debe=!!dest[id];
-      if(debe&&!u.vis){ u.vis=true; m.visible=true; u.halo.visible=true; u.etiqueta.visible=true; }
-      m.position.lerpVectors(desde[id],d,k);
-      if(k>=1&&!debe&&u.vis){ u.vis=false; m.visible=false; u.halo.visible=false; u.etiqueta.visible=false; }
-    }
-    if(k<1) tween=requestAnimationFrame(paso); else tween=null;
-  };
-  tween=requestAnimationFrame(paso);
-  aplicarEstado();
-  reconstruirAristas();
-  resetParticulas();
-  renderMigas();
-  moverCamara(CAMD[Math.min(path.length,2)]);
-}
+controls.update();
+let idleTimer=null;
+const cvs=renderer.domElement;
+cvs.addEventListener('pointerdown',()=>{ controls.autoRotate=false; if(idleTimer) clearTimeout(idleTimer); });
+cvs.addEventListener('pointerup',()=>{ if(idleTimer) clearTimeout(idleTimer);
+  idleTimer=setTimeout(()=>controls.autoRotate=true,8000); });
 
-/* ---- interacción ---- */
+/* interacción */
+const ray=new THREE.Raycaster(), raton=new THREE.Vector2();
+const detalleEl=document.getElementById('detalle');
+let movido=0;
 function pick(e){
   raton.x=(e.clientX/innerWidth)*2-1; raton.y=-(e.clientY/innerHeight)*2+1;
   ray.setFromCamera(raton,camera);
-  const objs=orden.filter(id=>mallas[id].userData.vis).map(id=>mallas[id]);
-  const hit=ray.intersectObjects(objs,false)[0];
+  const hit=ray.intersectObjects(orden.map(id=>mallas[id]),false)[0];
   return hit?hit.object.userData.id:null;
 }
 function mostrarDetalle(id){
   const n=NODOS[id];
   document.getElementById('d-nombre').innerHTML='<span class="dot" style="background:'+n.color+'"></span>'+n.nombre;
   document.getElementById('d-desc').textContent=n.desc||'';
-  const nh=hijosDe(id).length;
-  document.getElementById('d-meta').textContent=nh?nh+' SUBNODOS · TOCA PARA ENTRAR':'NODO FINAL';
+  document.getElementById('d-meta').textContent=(n.hijos.length?n.hijos.length+' SUBNODOS':'NODO FINAL');
   detalleEl.classList.remove('vis'); void detalleEl.offsetWidth; detalleEl.classList.add('vis');
 }
-let movido=0;
-const cvs=renderer.domElement;
+document.getElementById('d-cerrar').onclick=()=>detalleEl.classList.remove('vis');
 cvs.addEventListener('pointermove',e=>{ movido+=Math.abs(e.movementX||0)+Math.abs(e.movementY||0); });
 cvs.addEventListener('pointerdown',()=>{ movido=0; });
 cvs.addEventListener('pointerup',e=>{
-  if(movido<8){
-    const id=pick(e);
-    if(id){
-      if(hijosDe(id).length){ navegar(path.concat([id])); }
-      else mostrarDetalle(id);
-    } else detalleEl.classList.remove('vis');
-  }
+  if(movido<8){ const id=pick(e); if(id) mostrarDetalle(id); else detalleEl.classList.remove('vis'); }
 });
-document.getElementById('d-cerrar').onclick=()=>detalleEl.classList.remove('vis');
-atrasBtn.onclick=()=>{ if(path.length) navegar(path.slice(0,-1)); };
 addEventListener('message',e=>{
   if(e.origin!==location.origin||!e.data) return;
   if(e.data.type==='nassar-descs'&&e.data.descs){
@@ -401,25 +301,41 @@ addEventListener('message',e=>{
 });
 if(window.__nassarQ&&window.__nassarQ.length) window.__nassarQ.splice(0).forEach(()=>{});
 
-/* ---- bucle ---- */
+/* bucle */
 function resize(){ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); }
 addEventListener('resize',resize); resize();
 const clock=new THREE.Clock();
-let primerFrame=true;
-navegar([],false);
+const camStart=new THREE.Vector3(0,220,460);
+const camEnd=new THREE.Vector3(0,130,280);
+camera.position.copy(camStart);
+let introT=0, primerFrame=true;
 renderer.setAnimationLoop(()=>{
   const dt=Math.min(clock.getDelta(),0.05), t=clock.elapsedTime;
+  if(introT<1){
+    introT=Math.min(1,introT+dt/3.2);
+    const k=easeInOutCubic(introT);
+    camera.position.lerpVectors(camStart,camEnd,k);
+    camera.lookAt(0,0,0);
+  }
   controls.update();
   for(const id of orden){
     const m=mallas[id], u=m.userData;
-    if(!u.vis) continue;
+    const s=easeOutBack(clamp01((t-u.delay)/0.6));
+    m.scale.setScalar(Math.max(0.0001,u.r*s));
+    m.position.set(POSA[id].x+Math.sin(t*0.7+u.fase)*0.3,POSA[id].y,POSA[id].z+Math.cos(t*0.55+u.fase)*0.3);
     u.halo.material.opacity=u.hop+Math.sin(t*1.3+u.fase)*0.04;
     u.halo.position.copy(m.position);
     u.etiqueta.position.set(m.position.x,m.position.y+u.r+1.6,m.position.z);
-    u.etiqueta.material.opacity=0.95;
+    u.etiqueta.material.opacity=clamp01((t-u.delay-0.3)/0.5);
   }
-  actualizarAristas();
-  actualizarParticulas(dt);
+  for(let i=0;i<NP;i++){
+    pT[i]+=dt*0.18;
+    if(pT[i]>1){ pT[i]=0; pEdge[i]=(Math.random()*aristas.length)|0; }
+    const e=aristas[pEdge[i]], k=pT[i];
+    const pa=mallas[e[0]].position, pb=mallas[e[1]].position;
+    pPos[i*3]=pa.x+(pb.x-pa.x)*k; pPos[i*3+1]=pa.y+(pb.y-pa.y)*k; pPos[i*3+2]=pa.z+(pb.z-pa.z)*k;
+  }
+  pGeo.attributes.position.needsUpdate=true;
   renderer.render(scene,camera);
   if(primerFrame){ primerFrame=false;
     setTimeout(()=>{ document.getElementById('intro').style.opacity='0'; },400); }
