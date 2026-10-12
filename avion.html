@@ -311,15 +311,12 @@ const controls=new OrbitControls(camera,renderer.domElement);
 controls.target.set(0,0,0);
 controls.enableDamping=true; controls.dampingFactor=0.06;
 controls.enablePan=false;
-controls.autoRotate=true; controls.autoRotateSpeed=0.35;
+controls.autoRotate=false;
 controls.minDistance=40; controls.maxDistance=520;
 controls.maxPolarAngle=Math.PI; controls.minPolarAngle=0;
 controls.update();
-let idleTimer=null;
 const cvs=renderer.domElement;
-cvs.addEventListener('pointerdown',()=>{ controls.autoRotate=false; if(idleTimer) clearTimeout(idleTimer); });
-cvs.addEventListener('pointerup',()=>{ if(idleTimer) clearTimeout(idleTimer);
-  idleTimer=setTimeout(()=>controls.autoRotate=true,8000); });
+
 
 /* interacción */
 const ray=new THREE.Raycaster(), raton=new THREE.Vector2();
