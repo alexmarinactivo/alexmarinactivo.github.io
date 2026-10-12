@@ -67,7 +67,6 @@
 <div id="intro"></div>
 <div id="err3d"><div>No se pudo iniciar el 3D en este navegador.<br>Prueba con Chrome o Safari actualizado.</div></div>
 
-<script src="vendor/d3-force-3d.bundle.js"></script>
 <script>
 // buzón para mensajes que lleguen antes de que el módulo 3D esté listo
 window.__nassarQ=[];
@@ -228,8 +227,7 @@ function addNodo(nombre, desc, colr, pos, radio, fsLabel, grande, nacimiento){
   POS[nombre]=pos.clone();
   if(fsLabel){
     const lab=etiqueta(nombre, '#f2f6ff', fsLabel, grande);
-    m.userData.etiqOff=new THREE.Vector3(0, radio+4.4, 0);
-    lab.position.copy(pos).add(m.userData.etiqOff);
+    lab.position.copy(pos).add(new THREE.Vector3(0, radio+4.4, 0));
     lab.material.opacity=0;
     scene.add(lab);
     m.userData.etiqueta=lab;
@@ -253,8 +251,7 @@ GRUPOS.forEach((g,i)=>{
   const hp=new THREE.Vector3(Math.cos(ang)*R, 0, Math.sin(ang)*R);
   addNodo(g.nombre, "Sección: "+g.nombre+". Toca sus nodos para ver cada pieza.", g.color, hp, 2.0, 40, true, 0.9+i*0.18);
   const cartel=etiqueta("SECCIÓN · "+g.nombre.toUpperCase(), g.color, 30, true);
-  nodosPorNombre[g.nombre].userData.cartelOff=new THREE.Vector3(0, 13.5, 0);
-  cartel.position.copy(hp).add(nodosPorNombre[g.nombre].userData.cartelOff);
+  cartel.position.copy(hp).add(new THREE.Vector3(0, 13.5, 0));
   cartel.material.opacity=0;
   scene.add(cartel);
   nodosPorNombre[g.nombre].userData.etiqueta2=cartel;
@@ -270,46 +267,16 @@ GRUPOS.forEach((g,i)=>{
 // ================= ARISTAS: líneas finas + partículas viajeras =================
 const aristas=[];
 GRUPOS.forEach(g=>{
-  aristas.push({a:g.nombre,b:'CEREBRO',c:g.color});
-  g.nodos.forEach(([nom])=>{ aristas.push({a:nom,b:g.nombre,c:g.color}); });
+  const hp=POS[g.nombre];
+  aristas.push({a:hp,b:centroPos,c:g.color});
+  g.nodos.forEach(([nom])=>{ aristas.push({a:POS[nom],b:hp,c:g.color}); });
 });
-// ================= SIMULACIÓN DE FUERZAS (d3-force-3d, en local) =================
-const simNodos=[], simLinks=[];
-nodosMalla.forEach(m=>{
-  const s={id:m.userData.nombre, x:m.position.x, y:m.position.y, z:m.position.z, mesh:m};
-  if(m.userData.nombre==='CEREBRO'){ s.fx=0; s.fy=0; s.fz=0; }
-  simNodos.push(s);
-});
-GRUPOS.forEach(g=>{
-  simLinks.push({source:g.nombre, target:'CEREBRO'});
-  g.nodos.forEach(([nom])=> simLinks.push({source:nom, target:g.nombre}));
-});
-const anclaSec={}; GRUPOS.forEach(g=>{ anclaSec[g.nombre]=POS[g.nombre].clone(); });
-function anclaDe(id){
-  if(id==='CEREBRO') return null;
-  for(const g of GRUPOS){
-    if(g.nombre===id) return anclaSec[g.nombre];
-    for(const [n] of g.nodos) if(n===id) return anclaSec[g.nombre];
-  }
-  return null;
-}
-const sim=d3.forceSimulation(simNodos)
-  .force('link', d3.forceLink(simLinks).id(d=>d.id)
-    .distance(l=>{ const t=typeof l.target==='object'?l.target.id:l.target; return t==='CEREBRO'?34:11; })
-    .strength(0.9))
-  .force('charge', d3.forceManyBody().strength(-80))
-  .force('collide', d3.forceCollide(4.5))
-  .force('x', d3.forceX(d=>{const a=anclaDe(d.id); return a?a.x:0;}).strength(0.12))
-  .force('y', d3.forceY(d=>{const a=anclaDe(d.id); return a?a.y:0;}).strength(0.12))
-  .force('z', d3.forceZ(d=>{const a=anclaDe(d.id); return a?a.z:0;}).strength(0.12))
-  .alpha(1).alphaDecay(0.02).velocityDecay(0.35);
-let lineasPos=null;
+
 {
   const lp=new Float32Array(aristas.length*6), lc=new Float32Array(aristas.length*6);
   aristas.forEach((e,i)=>{
-    const pa=nodosPorNombre[e.a].position, pb=nodosPorNombre[e.b].position;
-    lp[i*6]=pa.x; lp[i*6+1]=pa.y; lp[i*6+2]=pa.z;
-    lp[i*6+3]=pb.x; lp[i*6+4]=pb.y; lp[i*6+5]=pb.z;
+    lp[i*6]=e.a.x; lp[i*6+1]=e.a.y; lp[i*6+2]=e.a.z;
+    lp[i*6+3]=e.b.x; lp[i*6+4]=e.b.y; lp[i*6+5]=e.b.z;
     const cc=hexRgb(e.c);
     lc[i*6]=cc[0]; lc[i*6+1]=cc[1]; lc[i*6+2]=cc[2];
     lc[i*6+3]=cc[0]; lc[i*6+4]=cc[1]; lc[i*6+5]=cc[2];
@@ -320,7 +287,6 @@ let lineasPos=null;
   const lineas=new THREE.LineSegments(lg, new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:0.32}));
   lineas.frustumCulled=false;
   scene.add(lineas);
-  lineasPos=lg.attributes.position;
 }
 // partículas doradas viajando hacia el centro por las aristas
 const NP=240;
@@ -449,24 +415,6 @@ renderer.setAnimationLoop(()=>{
     if(tween.t>=1) tween=null;
   }
   controls.update();
-  // sincronizar mallas con la simulación de fuerzas
-  for(const sn of simNodos){
-    const m=sn.mesh, u=m.userData;
-    m.position.set(sn.x, sn.y, sn.z);
-    u.halo.position.copy(m.position);
-    if(u.etiqueta) u.etiqueta.position.copy(m.position).add(u.etiqOff);
-    if(u.etiqueta2) u.etiqueta2.position.copy(m.position).add(u.cartelOff);
-  }
-  // aristas siguen a los nodos
-  if(lineasPos){
-    const arr=lineasPos.array;
-    for(let i=0;i<aristas.length;i++){
-      const pa=nodosPorNombre[aristas[i].a].position, pb=nodosPorNombre[aristas[i].b].position;
-      arr[i*6]=pa.x; arr[i*6+1]=pa.y; arr[i*6+2]=pa.z;
-      arr[i*6+3]=pb.x; arr[i*6+4]=pb.y; arr[i*6+5]=pb.z;
-    }
-    lineasPos.needsUpdate=true;
-  }
   // aparición escalonada de nodos
   for(const n of nodosMalla){
     const u=n.userData;
@@ -485,10 +433,9 @@ renderer.setAnimationLoop(()=>{
     pT[i]+=dt*0.22;
     if(pT[i]>1){ pT[i]=0; pEdge[i]=(Math.random()*aristas.length)|0; }
     const e=aristas[pEdge[i]], k=pT[i];
-    const pa=nodosPorNombre[e.a].position, pb=nodosPorNombre[e.b].position;
-    pPos[i*3]  =pa.x+(pb.x-pa.x)*k;
-    pPos[i*3+1]=pa.y+(pb.y-pa.y)*k;
-    pPos[i*3+2]=pa.z+(pb.z-pa.z)*k;
+    pPos[i*3]  =e.a.x+(e.b.x-e.a.x)*k;
+    pPos[i*3+1]=e.a.y+(e.b.y-e.a.y)*k;
+    pPos[i*3+2]=e.a.z+(e.b.z-e.a.z)*k;
   }
   pGeo.attributes.position.needsUpdate=true;
   renderPipeline.render();
