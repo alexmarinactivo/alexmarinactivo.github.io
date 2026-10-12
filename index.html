@@ -16,7 +16,7 @@
 @font-face{font-family:'Inter';src:url('vendor/fonts/inter-600.woff2') format('woff2');font-weight:600;font-display:swap}
 @font-face{font-family:'Inter';src:url('vendor/fonts/inter-700.woff2') format('woff2');font-weight:700;font-display:swap}
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%;background:#000000;color:#F2F0EA;
+html,body{height:100%;background:#101014;color:#F2F0EA;
  font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
  -webkit-tap-highlight-color:transparent}
 #app{display:flex;flex-direction:column;height:100dvh}
@@ -151,6 +151,13 @@ const $=id=>document.getElementById(id);
 const NOMBRE={en_curso:'EN CURSO',pendiente:'PENDIENTE',activo:'ACTIVO',hecho:'HECHO'};
 let ultimaOk=null, yaDentro=false;
 
+function descargaOtras(v){
+ ['cerebro','organismo','avion'].forEach(function(k){
+  if(k===v) return;
+  var fr=$('f-'+k);
+  if(fr && fr.getAttribute('src')){ try{ fr.src='about:blank'; }catch(e){} fr.removeAttribute('src'); }
+ });
+}
 function cargaVista(v){
  var fr=$('f-'+v); if(!fr) return;
  if(!fr.getAttribute('src')){ fr.src=fr.getAttribute('data-src'); }
@@ -161,6 +168,7 @@ function ir(v){ // 'vivo' | 'cerebro' | 'organismo' | 'avion'
   $('b-'+k).classList.toggle('on',v===k);
   $('vista-'+k).classList.toggle('on',v===k);
  });
+ descargaOtras(v==='vivo'?'':v);
  if(v!=='vivo') cargaVista(v);
 }
 cargaVista('cerebro');
