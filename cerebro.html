@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>La plataforma de Nassar Intelligence</title>
+<title>Nassar·OS — El Cerebro</title>
 <script type="importmap">
 {
   "imports": {
@@ -15,470 +15,605 @@
 }
 </script>
 <style>
-  html,body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#04060c;
-    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,sans-serif;
-    -webkit-tap-highlight-color:transparent; }
-  #c { position:fixed; inset:0; display:block; touch-action:none; }
-  #vineta { position:fixed; inset:0; pointer-events:none; z-index:3;
-    background:radial-gradient(ellipse at 50% 42%, transparent 50%, rgba(1,2,8,.34) 80%, rgba(0,1,6,.68) 100%); }
-  #sombra-top { position:fixed; top:0; left:0; right:0; height:110px; pointer-events:none; z-index:3;
-    background:linear-gradient(rgba(2,3,8,.6), transparent); }
-  #titulo { position:fixed; top:16px; left:0; right:0; text-align:center; color:#fff;
-    pointer-events:none; z-index:5; animation:aparicion 1.4s ease .9s both; }
-  #titulo h1 { margin:0; font-size:20px; letter-spacing:4px; font-weight:700;
-    text-shadow:0 0 24px rgba(255,213,79,.35); }
-  #titulo h1 .dorado { color:#FFD54F; }
-  #titulo p { margin:6px 0 0; font-size:11px; letter-spacing:3px; color:#8a93a6; font-weight:500; }
-  #leyenda { position:fixed; top:16px; left:14px; z-index:5; background:rgba(8,11,20,.66);
-    border:1px solid rgba(140,180,255,.16); border-radius:12px; padding:10px 12px;
-    color:#cfd6e4; font-size:12px; line-height:1.9; backdrop-filter:blur(8px);
-    animation:aparicion 1.4s ease 1.2s both; }
-  #leyenda .dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:8px;
-    box-shadow:0 0 8px currentColor; }
-  #tarjeta { position:fixed; left:14px; right:14px; bottom:16px; z-index:6; display:none;
-    background:rgba(8,11,20,.92); border:1px solid rgba(140,180,255,.22); border-radius:16px;
-    padding:16px 18px; color:#fff; backdrop-filter:blur(10px);
-    box-shadow:0 8px 40px rgba(0,0,0,.5); }
-  #tarjeta h2 { margin:0 0 6px; font-size:18px; letter-spacing:1px; }
-  #tarjeta p { margin:0; font-size:14px; color:#aeb6c8; line-height:1.55; }
-  #tarjeta .cerrar { position:absolute; top:8px; right:14px; color:#8a93a6; font-size:22px;
-    cursor:pointer; padding:4px; }
-  #b-ver-mision{display:none;margin-top:12px;background:rgba(255,213,79,.14);
-    border:1px solid rgba(255,213,79,.5);color:#FFD54F;font-size:14px;font-weight:700;
-    padding:10px 16px;border-radius:12px;cursor:pointer}
-  #ayuda { position:fixed; bottom:16px; left:0; right:0; text-align:center; color:#5b6478;
-    font-size:12px; letter-spacing:1px; pointer-events:none; z-index:5;
-    animation:aparicion 1.4s ease 1.6s both; }
-  #intro { position:fixed; inset:0; background:#04060c; z-index:40; pointer-events:none;
-    transition:opacity 1.8s ease; }
-  #err3d { position:fixed; inset:0; display:none; align-items:center; justify-content:center;
-    color:#8a93a6; font-size:14px; text-align:center; padding:30px; z-index:20; }
-  @keyframes aparicion { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+@font-face{font-family:'Inter';src:url('vendor/fonts/inter-400.woff2') format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:'Inter';src:url('vendor/fonts/inter-600.woff2') format('woff2');font-weight:600;font-display:swap}
+@font-face{font-family:'Inter';src:url('vendor/fonts/inter-700.woff2') format('woff2');font-weight:700;font-display:swap}
+@font-face{font-family:'Instrument Serif';src:url('vendor/fonts/instrument-serif-400.woff2') format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:'Kode Mono';src:url('vendor/fonts/kode-mono-400.woff2') format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:'Kode Mono';src:url('vendor/fonts/kode-mono-600.woff2') format('woff2');font-weight:600;font-display:swap}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;
+ background:radial-gradient(120% 90% at 50% 30%, #2A2B30 45%, #151619 100%);
+ color:#ECEAE3;font-family:'Inter',-apple-system,"Segoe UI",Roboto,sans-serif;
+ -webkit-tap-highlight-color:transparent}
+#c{position:fixed;inset:0;display:block;touch-action:none}
+/* ===== cromo HUD ===== */
+.hud{position:fixed;z-index:10;pointer-events:none}
+.hud .card{pointer-events:auto}
+#topbar{top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;
+ padding:14px 18px;animation:aparicion 1.2s ease .2s both}
+#marca{font-family:'Kode Mono',monospace;font-weight:600;font-size:15px;letter-spacing:2px;color:#ECEAE3}
+#marca b{color:#FFD54F;font-weight:600}
+#live{display:flex;align-items:center;gap:10px;font-family:'Kode Mono',monospace;font-size:12px;color:#A3A098}
+#pildora{display:flex;align-items:center;gap:7px;border:1px solid rgba(236,234,227,.14);
+ background:rgba(27,28,33,.85);border-radius:20px;padding:6px 13px;color:#ECEAE3;letter-spacing:1.5px;font-size:11px}
+#pildora .punto{width:8px;height:8px;border-radius:50%;background:#4ade80;animation:pulso 1.8s infinite}
+@keyframes pulso{0%{box-shadow:0 0 0 0 rgba(74,222,128,.55)}70%{box-shadow:0 0 0 8px rgba(74,222,128,0)}100%{box-shadow:0 0 0 0 rgba(74,222,128,0)}}
+#migas{top:64px;left:18px;display:flex;align-items:center;gap:8px;font-family:'Kode Mono',monospace;
+ font-size:12px;color:#A3A098;animation:aparicion 1.2s ease .4s both}
+#migas .crumb{pointer-events:auto;cursor:pointer;padding:5px 10px;border-radius:8px;letter-spacing:1px}
+#migas .crumb:hover{background:rgba(236,234,227,.08);color:#ECEAE3}
+#migas .crumb.ult{color:#FFD54F;cursor:default}
+#migas .sep{opacity:.4}
+#atras{pointer-events:auto;cursor:pointer;border:1px solid rgba(236,234,227,.14);background:rgba(27,28,33,.85);
+ color:#ECEAE3;border-radius:9px;font-family:'Kode Mono',monospace;font-size:13px;padding:5px 12px;display:none}
+#atras:hover{background:rgba(236,234,227,.1)}
+.card{background:rgba(27,28,33,.9);border:1px solid rgba(236,234,227,.14);border-radius:14px;
+ padding:14px 16px;backdrop-filter:blur(10px);box-shadow:0 10px 40px rgba(0,0,0,.45)}
+.card h3{font-family:'Kode Mono',monospace;font-size:10.5px;font-weight:600;letter-spacing:2.5px;color:#A3A098;margin-bottom:10px}
+.card h3 .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px}
+#card-ahora{left:18px;top:104px;max-width:290px;animation:aparicion 1.2s ease .6s both}
+#ahora-txt{font-size:14.5px;line-height:1.55;color:#ECEAE3}
+#panel-misiones{right:18px;top:104px;width:300px;max-height:calc(100% - 220px);overflow-y:auto;
+ animation:aparicion 1.2s ease .8s both}
+#chips{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.chip{font-family:'Kode Mono',monospace;font-size:10px;letter-spacing:1px;padding:4px 9px;border-radius:12px;
+ border:1px solid rgba(236,234,227,.14);color:#A3A098;cursor:pointer;pointer-events:auto}
+.chip.on{background:rgba(236,234,227,.12);color:#ECEAE3}
+.mrow{display:flex;align-items:center;gap:10px;padding:9px 4px;border-top:1px solid rgba(236,234,227,.07);
+ cursor:pointer;pointer-events:auto;border-radius:8px}
+.mrow:hover{background:rgba(236,234,227,.05)}
+.mrow .nm{flex:1;font-size:13.5px;font-weight:600}
+.mrow .dt{display:block;font-size:11.5px;color:#A3A098;font-weight:400;margin-top:2px}
+.pill{font-family:'Kode Mono',monospace;font-size:10px;letter-spacing:1px;padding:4px 10px;border-radius:12px;flex:none}
+.pill.en_curso{background:rgba(255,167,38,.14);color:#FFA726}
+.pill.pendiente{background:rgba(163,160,152,.14);color:#A3A098}
+.pill.activo{background:rgba(102,187,106,.14);color:#66BB6A}
+#card-ultimo{left:18px;bottom:18px;max-width:300px;animation:aparicion 1.2s ease 1s both}
+#card-ultimo li{list-style:none;font-size:13px;color:#c9c5b9;padding:6px 0 6px 22px;position:relative;line-height:1.4}
+#card-ultimo li:before{content:"✓";position:absolute;left:2px;color:#4ade80;font-weight:700}
+#detalle{left:50%;transform:translateX(-50%);bottom:18px;width:min(480px,calc(100% - 28px));display:none;z-index:11}
+#detalle.vis{display:block;animation:subir .45s cubic-bezier(.2,.8,.2,1)}
+@keyframes subir{from{opacity:0;transform:translate(-50%,16px)}to{opacity:1;transform:translate(-50%,0)}}
+#d-nombre{font-family:'Instrument Serif',serif;font-size:26px;color:#ECEAE3;margin-bottom:6px}
+#d-nombre .dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:10px}
+#d-desc{font-size:14px;color:#c9c5b9;line-height:1.6;margin-bottom:10px}
+#d-meta{font-family:'Kode Mono',monospace;font-size:11px;letter-spacing:1.5px;color:#A3A098;margin-bottom:12px}
+#d-btns{display:flex;gap:10px}
+.btn{flex:1;border:1px solid rgba(236,234,227,.2);background:rgba(236,234,227,.06);color:#ECEAE3;
+ font-family:'Inter',sans-serif;font-size:13.5px;font-weight:600;padding:11px;border-radius:11px;cursor:pointer}
+.btn:hover{background:rgba(236,234,227,.12)}
+.btn.oro{background:rgba(255,213,79,.13);border-color:rgba(255,213,79,.45);color:#FFD54F}
+#d-cerrar{position:absolute;top:10px;right:14px;color:#A3A098;font-size:20px;cursor:pointer;padding:4px;pointer-events:auto}
+#ayuda{bottom:18px;left:0;right:0;text-align:center;color:#6f6c63;font-size:11.5px;letter-spacing:1.5px;
+ font-family:'Kode Mono',monospace;animation:aparicion 1.2s ease 1.2s both}
+#intro{position:fixed;inset:0;background:#151619;z-index:40;pointer-events:none;transition:opacity 1.6s ease}
+#err3d{position:fixed;inset:0;display:none;align-items:center;justify-content:center;color:#A3A098;
+ font-size:14px;text-align:center;padding:30px;z-index:20}
+#btn-panel{display:none}
+@keyframes aparicion{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (max-width:760px){
+ #card-ahora{display:none}
+ #panel-misiones{top:auto;bottom:86px;right:14px;left:14px;width:auto;max-height:38%;display:none}
+ #panel-misiones.abierto{display:block}
+ #btn-panel{display:flex;position:fixed;right:14px;bottom:86px;z-index:12;pointer-events:auto;
+  width:46px;height:46px;border-radius:50%;align-items:center;justify-content:center;
+  background:rgba(27,28,33,.92);border:1px solid rgba(236,234,227,.2);color:#FFD54F;
+  font-size:19px;cursor:pointer}
+ #card-ultimo{display:none}
+ #migas{top:60px;left:14px}
+ #detalle{bottom:14px}
+ #ayuda{display:none}
+}
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
-<div id="vineta"></div>
-<div id="sombra-top"></div>
-<div id="titulo"><h1>EL CEREBRO <span class="dorado">·</span> NASSAR</h1><p>CENTRO DE MANDO · TODO LO ACTIVO, EN VIVO</p></div>
-<div id="leyenda"></div>
-<div id="tarjeta"><span class="cerrar" id="cerrar">×</span><h2 id="t-nombre"></h2><p id="t-desc"></p><button id="b-ver-mision">Ver en En vivo →</button></div>
-<div id="ayuda">Arrastra para girar · Pellizca o rueda para acercar · Toca un nodo</div>
+<div class="hud" id="topbar"><div id="marca">NASSAR<b>·OS</b></div>
+ <div id="live"><span id="reloj">--:--</span><span id="pildora"><span class="punto"></span>EN VIVO</span></div></div>
+<div class="hud" id="migas"><button id="atras">← atrás</button><span id="crumbs"></span></div>
+<div class="hud card" id="card-ahora"><h3><span class="dot" style="background:#4ade80"></span>AHORA MISMO</h3><div id="ahora-txt">—</div></div>
+<div class="hud card" id="panel-misiones"><h3><span class="dot" style="background:#FFD54F"></span>MISIONES</h3>
+ <div id="chips"></div><div id="mrows"></div></div>
+<div class="hud card" id="card-ultimo"><h3><span class="dot" style="background:#4DD0E1"></span>ÚLTIMO COMPLETADO</h3><ul id="ult-lista"><li>—</li></ul></div>
+<div class="hud card" id="detalle"><span id="d-cerrar">×</span><div id="d-nombre"></div><p id="d-desc"></p>
+ <div id="d-meta"></div><div id="d-btns"></div></div>
+<div class="hud" id="ayuda">toca un nodo para entrar · arrastra para girar · pellizca para acercar</div>
+<button id="btn-panel" aria-label="Misiones">≡</button>
 <div id="intro"></div>
 <div id="err3d"><div>No se pudo iniciar el 3D en este navegador.<br>Prueba con Chrome o Safari actualizado.</div></div>
-
 <script>
-// buzón para mensajes que lleguen antes de que el módulo 3D esté listo
 window.__nassarQ=[];
 addEventListener('message',function(e){
   if(e.origin!==location.origin) return;
-  if(e.data&&e.data.type==='nassar-focus') window.__nassarQ.push(e.data);
+  if(e.data&&e.data.type&&e.data.type.indexOf('nassar-')===0) window.__nassarQ.push(e.data);
 });
 </script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/OrbitControls.js';
-import { pass, time, uniform, color, float, sin, uv, attribute, smoothstep, fract } from 'three/tsl';
+import { pass, time, uniform, color, float, sin } from 'three/tsl';
 import { bloom } from 'three/addons/BloomNode.js';
 
-// ================= DATOS (nombres exactos = claves del postMessage) =================
-const GRUPOS = [
-  { id:"misiones", nombre:"Misiones de dinero", color:"#66BB6A", nodos:[
-    ["Producto nuevo","Detalle en la vista En vivo."],
-    ["Crypto","Detalle en la vista En vivo."],
-    ["Forex demo","Detalle en la vista En vivo."],
-    ["Vinted","Detalle en la vista En vivo."]]},
-  { id:"cerebros", nombre:"Cerebros IA", color:"#4DD0E1", nodos:[
-    ["El Consejo","Detalle en la vista En vivo."],
-    ["Copiloto","Detalle en la vista En vivo."]]},
-  { id:"radar", nombre:"Radar y caza", color:"#F06292", nodos:[
-    ["Radar IA","Detalle en la vista En vivo."],
-    ["Laboratorio","Detalle en la vista En vivo."],
-    ["Bóveda","Detalle en la vista En vivo."],
-    ["Dieta de información","Detalle en la vista En vivo."]]},
-  { id:"vida", nombre:"Vida y trámites", color:"#FFA726", nodos:[
-    ["Canje permiso","Detalle en la vista En vivo."],
-    ["Cita INSS","Detalle en la vista En vivo."],
-    ["Vuelo","Detalle en la vista En vivo."],
-    ["Finanzas","Detalle en la vista En vivo."],
-    ["Privacidad","Detalle en la vista En vivo."],
-    ["Familia","Detalle en la vista En vivo."]]},
-  { id:"cap", nombre:"Capacidades", color:"#7986CB", nodos:[
-    ["Navegador","Detalle en la vista En vivo."],
-    ["Memoria","Detalle en la vista En vivo."],
-    ["Investigación","Detalle en la vista En vivo."],
-    ["Artefactos","Detalle en la vista En vivo."],
-    ["Spotify","Detalle en la vista En vivo."]]}
-];
-const CENTRO = { nombre:"CEREBRO", desc:"Nassar Intelligence: tu agente personal. Este cerebro alimenta a las 5 secciones y lo orquesta todo. Tú solo decides lo imprescindible.", color:"#FFD54F" };
-
-
-// Misiones (index.html) -> nodo que las representa
-const MAPA_MISIONES = {
-  "Misión ganancias":"Producto nuevo",
-  "Canje permiso marroquí":"Canje permiso",
-  "Privacidad total":"Privacidad",
-  "Cita INSS Villena":"Cita INSS",
-  "Vuelo Tánger → Valencia":"Vuelo",
-  "El Consejo":"El Consejo"
+// ================= ÁRBOL (nombres exactos = claves del postMessage) =================
+const NODOS = {
+"cerebro":{nombre:"CEREBRO",label:"nassar",color:"#FFD54F",desc:"Nassar Intelligence: tu agente personal. Orquesto las 5 secciones; tú solo decides lo imprescindible.",hijos:["Misiones de dinero","Cerebros IA","Radar y caza","Vida y trámites","Capacidades"]},
+"Misiones de dinero":{label:"dinero",color:"#66BB6A",desc:"De aquí saldrán tus ganancias.",hijos:["Producto nuevo","Crypto","Forex demo","Vinted"]},
+"Producto nuevo":{color:"#66BB6A",desc:"Misión ganancias: producto digital creado desde cero, tu misión principal.",hijos:["Disociación total","Email neutro","Maletín","Libertad total"]},
+"Disociación total":{color:"#66BB6A",desc:"Nada a tu nombre ni vinculado a ti hasta que haya ganancias reales.",hijos:[]},
+"Email neutro":{color:"#66BB6A",desc:"alexmarinactivo@gmail.com — identidad neutra Alex Marin.",hijos:[]},
+"Maletín":{color:"#66BB6A",desc:"Cada acceso y contraseña de la misión, en PDF actualizado.",hijos:[]},
+"Libertad total":{color:"#66BB6A",desc:"Tú decides el cómo; Ab solo aparece en lo imprescindible.",hijos:[]},
+"Crypto":{color:"#66BB6A",desc:"En pausa: sin capital para invertir.",hijos:["En pausa","Paper trading","TradingView"]},
+"En pausa":{color:"#66BB6A",desc:"Se retoma cuando tú digas.",hijos:[]},
+"Paper trading":{color:"#66BB6A",desc:"Backtest 5 años: tendencia SMA200 +258%.",hijos:[]},
+"TradingView":{color:"#66BB6A",desc:"100.000 $ virtuales, sin apalancamiento.",hijos:[]},
+"Forex demo":{color:"#66BB6A",desc:"Demo con 100.000 $ virtuales en TradingView.",hijos:["TradingView FX","100.000 $","Sin XTB"]},
+"TradingView FX":{color:"#66BB6A",desc:"Cuenta alexmarinactivo, paper trading activado.",hijos:[]},
+"100.000 $":{color:"#66BB6A",desc:"Capital virtual para practicar sin riesgo.",hijos:[]},
+"Sin XTB":{color:"#66BB6A",desc:"La CNMV prohíbe las demos a minoristas en España.",hijos:[]},
+"Vinted":{color:"#66BB6A",desc:"Plan de reventa: investigación completa.",hijos:["Sneakers","Vintage deportivo","Polos de marca","Electrónica","Lotes infantiles"]},
+"Sneakers":{color:"#66BB6A",desc:"El nicho que más se mueve.",hijos:[]},
+"Vintage deportivo":{color:"#66BB6A",desc:"Camisetas y chándals con historia.",hijos:[]},
+"Polos de marca":{color:"#66BB6A",desc:"Hombre: lo clásico que siempre vende.",hijos:[]},
+"Electrónica":{color:"#66BB6A",desc:"Consolas y gadgets de segunda mano.",hijos:[]},
+"Lotes infantiles":{color:"#66BB6A",desc:"Ropa de niño en lote: volumen.",hijos:[]},
+"Cerebros IA":{label:"cerebros",color:"#4DD0E1",desc:"Los cerebros que piensan contigo.",hijos:["El Consejo"]},
+"El Consejo":{color:"#4DD0E1",desc:"Las 5 mejores IAs debaten tus decisiones. Diseño congelado.",hijos:["chatgpt","claude","gemini","grok","deepseek","Copiloto"]},
+"chatgpt":{nombre:"ChatGPT",color:"#4DD0E1",desc:"OpenAI — cuenta en marcha, clave pendiente.",hijos:[]},
+"claude":{nombre:"Claude",color:"#4DD0E1",desc:"Anthropic — cuenta en marcha, clave pendiente.",hijos:[]},
+"gemini":{nombre:"Gemini",color:"#4DD0E1",desc:"Google — clave creada; pégala en la Bóveda.",hijos:[]},
+"grok":{nombre:"Grok",color:"#4DD0E1",desc:"xAI — pendiente recarga de saldo.",hijos:[]},
+"deepseek":{nombre:"DeepSeek",color:"#4DD0E1",desc:"DeepSeek — cuenta en marcha, clave pendiente.",hijos:[]},
+"Copiloto":{color:"#4DD0E1",desc:"Tu sistema operativo personal del camionero internacional. Aparcado hasta montar El Consejo.",hijos:["Trabajo","Dinero","Familia","Casa","Salud","Camión"]},
+"Trabajo":{color:"#4DD0E1",desc:"Tiempos, rutas y esperas en muelles.",hijos:[]},
+"Dinero":{color:"#4DD0E1",desc:"Tus números, siempre a mano.",hijos:[]},
+"Familia":{color:"#4DD0E1",desc:"Lo importante, primero.",hijos:[]},
+"Casa":{color:"#4DD0E1",desc:"Tu base en tierra.",hijos:[]},
+"Salud":{color:"#4DD0E1",desc:"La máquina más importante eres tú.",hijos:[]},
+"Camión":{color:"#4DD0E1",desc:"El camión como sensor: Volvo FH Aero.",hijos:[]},
+"Radar y caza":{label:"radar",color:"#F06292",desc:"Vigilo el mercado para traerte lo mejor.",hijos:["Radar IA","Laboratorio","Bóveda","Dieta de información"]},
+"Radar IA":{color:"#F06292",desc:"Cada mañana caza herramientas, modelos y trucos.",hijos:["Caza diaria","El muro"]},
+"Caza diaria":{color:"#F06292",desc:"Sale cada mañana, ~08:00.",hijos:[]},
+"El muro":{color:"#F06292",desc:"Se actualiza solo con lo cazado.",hijos:[]},
+"Laboratorio":{color:"#F06292",desc:"Donde se cazan y prueban herramientas.",hijos:["Cazar","Probar","Tú decides"]},
+"Cazar":{color:"#F06292",desc:"Herramientas y estrategias nuevas.",hijos:[]},
+"Probar":{color:"#F06292",desc:"Las pruebo antes de proponértelas.",hijos:[]},
+"Tú decides":{color:"#F06292",desc:"Nada entra sin tu permiso explícito.",hijos:[]},
+"Bóveda":{color:"#F06292",desc:"La mejor herramienta de IA por categoría.",hijos:["17 categorías","Claude Skills"]},
+"17 categorías":{color:"#F06292",desc:"Inspeccionadas en paralelo.",hijos:[]},
+"Claude Skills":{color:"#F06292",desc:"Las que ganan la comparativa.",hijos:[]},
+"Dieta de información":{label:"dieta info",color:"#F06292",desc:"Sin scroll infinito: yo extraigo el valor.",hijos:["Cuentas","Resúmenes","Guía PDF"]},
+"Cuentas":{color:"#F06292",desc:"Me pasas reels; yo los reviso.",hijos:[]},
+"Resúmenes":{color:"#F06292",desc:"Lo útil para ganar dinero.",hijos:[]},
+"Guía PDF":{color:"#F06292",desc:"La guía del emprendedor IA.",hijos:[]},
+"Vida y trámites":{label:"vida",color:"#FFA726",desc:"Tu vida administrativa bajo control.",hijos:["Canje permiso","Cita INSS","Vuelo","Finanzas","Privacidad","Familia"]},
+"Canje permiso":{color:"#FFA726",desc:"Canje del permiso marroquí (categoría B).",hijos:["Validación 11 oct","Tasa 2.3","Esperando Marruecos"]},
+"Validación 11 oct":{color:"#FFA726",desc:"Enviada desde tu móvil; correo DGT recibido.",hijos:[]},
+"Tasa 2.3":{color:"#FFA726",desc:"28,87 € al presentar el canje.",hijos:[]},
+"Esperando Marruecos":{color:"#FFA726",desc:"Falta el localizador para el paso 2.",hijos:[]},
+"Cita INSS":{color:"#FFA726",desc:"29 de octubre, 09:00, Villena.",hijos:["29 oct · 09:00","Localizador","CAPI + ayuda"]},
+"29 oct · 09:00":{color:"#FFA726",desc:"Villena, Seguridad Social.",hijos:[]},
+"Localizador":{color:"#FFA726",desc:"7e2d7b7 — no se cancela sin permiso.",hijos:[]},
+"CAPI + ayuda":{color:"#FFA726",desc:"Del recién nacido + pago único.",hijos:[]},
+"Vuelo":{color:"#FFA726",desc:"FR5540 · 30 oct · Tánger → Valencia.",hijos:["FR5540","06:45 → 08:10","AUTR3S"]},
+"FR5540":{color:"#FFA726",desc:"Ryanair, 30 de octubre.",hijos:[]},
+"06:45 → 08:10":{color:"#FFA726",desc:"Tánger → Valencia. Te aviso de cambios.",hijos:[]},
+"AUTR3S":{color:"#FFA726",desc:"Tu reserva.",hijos:[]},
+"Finanzas":{color:"#FFA726",desc:"Tu economía bajo control.",hijos:["Spendee","App propia","Presupuestos"]},
+"Spendee":{color:"#FFA726",desc:"Vinculada: veo saldos y movimientos.",hijos:[]},
+"App propia":{color:"#FFA726",desc:"Aparcada; la viste penosa.",hijos:[]},
+"Presupuestos":{color:"#FFA726",desc:"Pendientes: ingresos, fijos y ahorro.",hijos:[]},
+"Privacidad":{color:"#FFA726",desc:"Programa de privacidad total v5.",hijos:["Pixel 9 Pro","Mullvad VPN","Signal","Programa v5"]},
+"Pixel 9 Pro":{color:"#FFA726",desc:"GrapheneOS: tu dispositivo privado.",hijos:[]},
+"Mullvad VPN":{color:"#FFA726",desc:"5 €/mes, cuenta solo-número.",hijos:[]},
+"Signal":{color:"#FFA726",desc:"Para lo sensible de la familia.",hijos:[]},
+"Programa v5":{color:"#FFA726",desc:"40 días, 100% legal.",hijos:[]},
+"Familia":{color:"#FFA726",desc:"Tu mujer y tu hijo recién nacido.",hijos:["Mujer","Hijo","Signal fam"]},
+"Mujer":{color:"#FFA726",desc:"Lo sensible, fuera del móvil normal.",hijos:[]},
+"Hijo":{color:"#FFA726",desc:"Recién nacido. Sin fotos en abierto.",hijos:[]},
+"Signal fam":{nombre:"Signal",color:"#FFA726",desc:"Vuestras conversaciones sensibles.",hijos:[]},
+"Capacidades":{label:"capacidades",color:"#7986CB",desc:"Lo que puedo hacer por ti.",hijos:["Navegador","Memoria","Investigación","Artefactos","Spotify"]},
+"Navegador":{color:"#7986CB",desc:"Opero webs por ti.",hijos:["Trámites","Compras","Altas"]},
+"Trámites":{color:"#7986CB",desc:"Sedes electrónicas y papeleos.",hijos:[]},
+"Compras":{color:"#7986CB",desc:"Las comparo y las remato por ti.",hijos:[]},
+"Altas":{color:"#7986CB",desc:"Cuentas nuevas, con tu permiso.",hijos:[]},
+"Memoria":{color:"#7986CB",desc:"Aprendo de ti y recuerdo lo importante.",hijos:["Reglas","Misiones","Decisiones"]},
+"Reglas":{color:"#7986CB",desc:"Lo que me ordenas que no olvide.",hijos:[]},
+"Misiones":{color:"#7986CB",desc:"Tus objetivos, siempre a mano.",hijos:[]},
+"Decisiones":{color:"#7986CB",desc:"Lo decidido, guardado.",hijos:[]},
+"Investigación":{color:"#7986CB",desc:"Busco y verifico en la web.",hijos:["Negocios","Competencia","Con enlaces"]},
+"Negocios":{color:"#7986CB",desc:"Nuevas vías para ganar.",hijos:[]},
+"Competencia":{color:"#7986CB",desc:"Quién hace qué y a qué precio.",hijos:[]},
+"Con enlaces":{color:"#7986CB",desc:"Cada dato con su enlace.",hijos:[]},
+"Artefactos":{color:"#7986CB",desc:"Documentos listos para usar.",hijos:["Maletín art","Guías","Informes"]},
+"Maletín art":{nombre:"Maletín",color:"#7986CB",desc:"Tus accesos, en PDF al día.",hijos:[]},
+"Guías":{color:"#7986CB",desc:"Manuales paso a paso.",hijos:[]},
+"Informes":{color:"#7986CB",desc:"Investigaciones listas para leer.",hijos:[]},
+"Spotify":{color:"#7986CB",desc:"Música desde el chat.",hijos:[]}
 };
+for(const id in NODOS){ const n=NODOS[id]; if(!n.nombre) n.nombre=id; if(!n.label) n.label=n.nombre.toLowerCase(); }
+const PADRE={};
+for(const id in NODOS) for(const h of NODOS[id].hijos) PADRE[h]=id;
+const MAPA_MISIONES={"Misión ganancias":"Producto nuevo","Canje permiso marroquí":"Canje permiso","Privacidad total":"Privacidad","Cita INSS Villena":"Cita INSS","Vuelo Tánger → Valencia":"Vuelo","El Consejo":"El Consejo"};
 
-// ================= RENDERER =================
-const canvas = document.getElementById('c');
-const reducido = matchMedia('(prefers-reduced-motion: reduce)').matches;
+// ================= RENDERER / ESCENA =================
+const canvas=document.getElementById('c');
+const reducido=matchMedia('(prefers-reduced-motion: reduce)').matches;
 let renderer;
-try {
-  renderer = new THREE.WebGPURenderer({ canvas, antialias:true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); // presupuesto móvil
-  renderer.toneMapping = THREE.ACESFilmicToneMapping; // el truco de color de estudio
+try{
+  renderer=new THREE.WebGPURenderer({canvas,antialias:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;
   await renderer.init();
-} catch(e) {
-  document.getElementById('err3d').style.display = 'flex';
-  throw e;
-}
+}catch(e){ document.getElementById('err3d').style.display='flex'; throw e; }
+try{ await Promise.race([Promise.all([
+  document.fonts.load('600 40px "Kode Mono"'),document.fonts.load('400 40px "Instrument Serif"'),document.fonts.load('600 16px "Inter"')
+ ]), new Promise(r=>setTimeout(r,2500))]); }catch(e){}
 
-// ================= ESCENA / CÁMARA =================
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x04060c); // negro azulado, nunca puro
-scene.fog = new THREE.FogExp2(0x04060c, 0.0072);
-const camera = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 0.1, 700);
-const camStart = new THREE.Vector3(0, 62, 168);
-const camEnd = new THREE.Vector3(0, 13, 84);
-camera.position.copy(reducido ? camEnd : camStart);
-camera.lookAt(0, 2, 0);
+const scene=new THREE.Scene();
+(function fondo(){ // degradado radial cálido estilo JEV (procedural, offline)
+  const c=document.createElement('canvas'); c.width=c.height=512;
+  const x=c.getContext('2d');
+  const g=x.createRadialGradient(256,150,40,256,256,360);
+  g.addColorStop(0,'#2E2F34'); g.addColorStop(0.45,'#222326'); g.addColorStop(1,'#141518');
+  x.fillStyle=g; x.fillRect(0,0,512,512);
+  const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace;
+  scene.background=t;
+})();
+scene.fog=new THREE.FogExp2(0x17181c,0.006);
+const camera=new THREE.PerspectiveCamera(50,innerWidth/innerHeight,0.1,600);
+camera.position.set(0,64,175); camera.lookAt(0,2,0);
 
 // ================= HELPERS =================
-const easeInOutCubic = t => t<.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
-const easeOutBack = t => { const c1=1.70158, c3=c1+1; return 1 + c3*Math.pow(t-1,3) + c1*Math.pow(t-1,2); };
-const clamp01 = t => Math.max(0, Math.min(1, t));
-function hexRgb(hex){ const n=parseInt(hex.slice(1),16); return [((n>>16)&255)/255, ((n>>8)&255)/255, (n&255)/255]; }
-function rr(x,px,py,w,h,r){ x.beginPath(); x.moveTo(px+r,py); x.arcTo(px+w,py,px+w,py+h,r); x.arcTo(px+w,py+h,px,py+h,r); x.arcTo(px,py+h,px,py,r); x.arcTo(px,py,px+w,py,r); x.closePath(); }
+const easeInOutCubic=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+const easeOutBack=t=>{const c=1.70158,c3=c+1;return 1+c3*Math.pow(t-1,3)+c*Math.pow(t-1,2);};
+const clamp01=t=>Math.max(0,Math.min(1,t));
+function hexRgb(h){const n=parseInt(h.slice(1),16);return[((n>>16)&255)/255,((n>>8)&255)/255,(n&255)/255];}
+function glowTex(){const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d');
+ const g=x.createRadialGradient(64,64,0,64,64,64);
+ g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(0.25,'rgba(255,255,255,.5)');
+ g.addColorStop(0.6,'rgba(255,255,255,.12)');g.addColorStop(1,'rgba(255,255,255,0)');
+ x.fillStyle=g;x.fillRect(0,0,128,128);return new THREE.CanvasTexture(c);}
+const GLOW=glowTex();
 
-// ================= TEXTURAS PROCEDURALES =================
-function glowTex(){
-  const c=document.createElement('canvas'); c.width=c.height=128;
-  const x=c.getContext('2d');
-  const g=x.createRadialGradient(64,64,0,64,64,64);
-  g.addColorStop(0,'rgba(255,255,255,1)'); g.addColorStop(0.25,'rgba(255,255,255,.55)');
-  g.addColorStop(0.55,'rgba(255,255,255,.14)'); g.addColorStop(1,'rgba(255,255,255,0)');
-  x.fillStyle=g; x.fillRect(0,0,128,128);
-  return new THREE.CanvasTexture(c);
-}
-const GLOW = glowTex();
-
-function materialNodo(hex){
-  const mat = new THREE.MeshBasicNodeMaterial();
-  const uAmp = uniform(0.10), uBright = uniform(1.18), uPhase = uniform(Math.random()*6.28);
-  mat.colorNode = color(hex).mul(uBright).mul(
-    float(1).sub(uAmp).add(uAmp.mul(float(0.5).add(float(0.5).mul(sin(time.mul(float(1.6)).add(uPhase))))))
-  );
-  mat.userData = { uAmp, uBright };
-  return mat;
-}
-// Tubo de flujo de datos: estelas luminosas que viajan por la arista
-
-
-// ================= NODOS =================
-const POS = {};
-const nodosMalla = [];
-const nodosPorNombre = {};
-let ordenNacimiento = 0;
-
-function etiqueta(texto, colr, fs, grande){
-  const c=document.createElement('canvas');
+function etiquetaMono(texto){
+  const fs=34,c=document.createElement('canvas');
   let x=c.getContext('2d');
-  const font=`600 ${fs}px -apple-system,"SF Pro Display","Segoe UI",Roboto,sans-serif`;
-  x.font=font;
-  try{ x.letterSpacing = grande ? '5px' : '3px'; }catch(e){}
-  const tw=x.measureText(texto).width;
-  const padX=24, padY=15;
-  c.width=Math.ceil(tw+padX*2); c.height=fs+padY*2;
+  x.font='600 '+fs+'px "Kode Mono",monospace';
+  try{x.letterSpacing='3px';}catch(e){}
+  const tw=x.measureText(texto).width,pad=18;
+  c.width=Math.ceil(tw+pad*2);c.height=fs+26;
   x=c.getContext('2d');
-  const r=c.height/2;
-  x.fillStyle='rgba(5,8,16,0.60)'; x.strokeStyle='rgba(150,190,255,0.20)'; x.lineWidth=2;
-  rr(x,2,2,c.width-4,c.height-4,r-2); x.fill(); x.stroke();
-  x.font=font;
-  try{ x.letterSpacing = grande ? '5px' : '3px'; }catch(e){}
-  x.textBaseline='middle'; x.fillStyle=colr;
-  x.shadowColor='rgba(0,0,0,0.9)'; x.shadowBlur=8;
-  x.fillText(texto, padX, c.height/2+2);
-  const t=new THREE.CanvasTexture(c); t.anisotropy=4; t.colorSpace=THREE.SRGBColorSpace;
-  const s=new THREE.Sprite(new THREE.SpriteMaterial({ map:t, transparent:true, depthWrite:false, fog:false }));
-  const k=0.052;
-  s.scale.set(c.width*k, c.height*k, 1);
-  s.renderOrder=5;
+  x.font='600 '+fs+'px "Kode Mono",monospace';
+  try{x.letterSpacing='3px';}catch(e){}
+  x.textBaseline='middle';
+  x.shadowColor='rgba(0,0,0,.85)';x.shadowBlur=7;
+  x.fillStyle='#ECEAE3';
+  x.fillText(texto,pad,c.height/2+1);
+  const t=new THREE.CanvasTexture(c);t.anisotropy=4;t.colorSpace=THREE.SRGBColorSpace;
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthWrite:false,fog:false}));
+  const k=0.042;
+  s.scale.set(c.width*k,c.height*k,1);s.renderOrder=5;
   return s;
 }
-
-function addNodo(nombre, desc, colr, pos, radio, fsLabel, grande, nacimiento){
-  const mat = materialNodo(colr);
-  const m = new THREE.Mesh(new THREE.SphereGeometry(radio, 28, 28), mat);
-  m.position.copy(pos);
-  const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map:GLOW, color:colr, transparent:true,
-    opacity:0.35, depthWrite:false, fog:false, blending:THREE.AdditiveBlending }));
-  const baseHalo = radio*8.5;
-  halo.scale.set(baseHalo, baseHalo, 1);
-  halo.position.copy(pos); halo.renderOrder=4;
-  scene.add(halo);
-  m.userData = { nombre, desc, color:colr, halo, baseHalo,
-    uAmp:mat.userData.uAmp, uBright:mat.userData.uBright,
-    state:'normal', nacimiento, etiqueta:null };
-  scene.add(m); nodosMalla.push(m); nodosPorNombre[nombre]=m;
-  POS[nombre]=pos.clone();
-  if(fsLabel){
-    const lab=etiqueta(nombre, '#f2f6ff', fsLabel, grande);
-    lab.position.copy(pos).add(new THREE.Vector3(0, radio+4.4, 0));
-    lab.material.opacity=0;
-    scene.add(lab);
-    m.userData.etiqueta=lab;
-  }
-  m.scale.setScalar(0.0001);
-  halo.scale.set(0.0001,0.0001,1);
-  return m;
+function materialNodo(hex){
+  const mat=new THREE.MeshBasicNodeMaterial();
+  const uAmp=uniform(0.08),uBright=uniform(1.15),uPhase=uniform(Math.random()*6.28);
+  mat.colorNode=color(hex).mul(uBright).mul(
+    float(1).sub(uAmp).add(uAmp.mul(float(0.5).add(float(0.5).mul(sin(time.mul(float(1.4)).add(uPhase)))))));
+  mat.userData={uAmp,uBright};
+  return mat;
 }
 
-// --- cerebro central ---
-const centroPos = new THREE.Vector3(0,0,0);
-addNodo(CENTRO.nombre, CENTRO.desc, CENTRO.color, centroPos, 3.4, 54, true, 0.5);
-nodosPorNombre["CEREBRO"].userData.uBright.value = 1.5;
-// anillos orbitales del núcleo
+// ================= NODOS (pool persistente) =================
+const mallas={}, orden=[];
+for(const id in NODOS){
+  const n=NODOS[id];
+  const mat=materialNodo(n.color);
+  const m=new THREE.Mesh(new THREE.SphereGeometry(1,26,26),mat);
+  const halo=new THREE.Sprite(new THREE.SpriteMaterial({map:GLOW,color:n.color,transparent:true,
+    opacity:0.32,depthWrite:false,fog:false,blending:THREE.AdditiveBlending}));
+  halo.renderOrder=4; scene.add(halo);
+  const lab=etiquetaMono(n.label); lab.material.opacity=0; scene.add(lab);
+  const u={id,nombre:n.nombre,color:n.color,halo,etiqueta:lab,
+    uAmp:mat.userData.uAmp,uBright:mat.userData.uBright,
+    state:'normal',r:0.0001,rT:0,base:new THREE.Vector3(),baseT:new THREE.Vector3(),
+    fase:Math.random()*6.28,delay:0,navT:-10};
+  if(id==='cerebro') u.uBright.value=1.5;
+  m.userData=u; m.scale.setScalar(0.0001);
+  scene.add(m); mallas[id]=m; orden.push(id);
+}
 
-
-// --- 5 secciones en anillo ---
-const R = 34;
-GRUPOS.forEach((g,i)=>{
-  const ang=(i/GRUPOS.length)*Math.PI*2 - Math.PI/2;
-  const hp=new THREE.Vector3(Math.cos(ang)*R, 0, Math.sin(ang)*R);
-  addNodo(g.nombre, "Sección: "+g.nombre+". Toca sus nodos para ver cada pieza.", g.color, hp, 2.0, 40, true, 0.9+i*0.18);
-  const cartel=etiqueta("SECCIÓN · "+g.nombre.toUpperCase(), g.color, 30, true);
-  cartel.position.copy(hp).add(new THREE.Vector3(0, 13.5, 0));
-  cartel.material.opacity=0;
-  scene.add(cartel);
-  nodosPorNombre[g.nombre].userData.etiqueta2=cartel;
-
-  g.nodos.forEach(([nom,des],j)=>{
-    const m=g.nodos.length, ph=Math.acos(1-2*(j+0.5)/m), th=Math.PI*(1+Math.sqrt(5))*j+1.3;
-    const r2=9.5;
-    const lp=hp.clone().add(new THREE.Vector3(r2*Math.sin(ph)*Math.cos(th), r2*Math.cos(ph)*0.75, r2*Math.sin(ph)*Math.sin(th)));
-    addNodo(nom, des, g.color, lp, 1.0, 30, false, 1.5+(ordenNacimiento++)*0.045);
-  });
-});
-
-// ================= ARISTAS: líneas finas + partículas viajeras =================
-const aristas=[];
-GRUPOS.forEach(g=>{
-  const hp=POS[g.nombre];
-  aristas.push({a:hp,b:centroPos,c:g.color});
-  g.nodos.forEach(([nom])=>{ aristas.push({a:POS[nom],b:hp,c:g.color}); });
-});
-
-{
-  const lp=new Float32Array(aristas.length*6), lc=new Float32Array(aristas.length*6);
+// ================= ARISTAS + PARTÍCULAS =================
+let aristas=[]; // {a:id,b:id}
+let lineas=null;
+function reconstruirAristas(focoId){
+  aristas=NODOS[focoId].hijos.map(h=>({a:focoId,b:h}));
+  if(lineas){ scene.remove(lineas); lineas.geometry.dispose(); }
+  const lp=new Float32Array(aristas.length*6),lc=new Float32Array(aristas.length*6);
   aristas.forEach((e,i)=>{
-    lp[i*6]=e.a.x; lp[i*6+1]=e.a.y; lp[i*6+2]=e.a.z;
-    lp[i*6+3]=e.b.x; lp[i*6+4]=e.b.y; lp[i*6+5]=e.b.z;
-    const cc=hexRgb(e.c);
-    lc[i*6]=cc[0]; lc[i*6+1]=cc[1]; lc[i*6+2]=cc[2];
-    lc[i*6+3]=cc[0]; lc[i*6+4]=cc[1]; lc[i*6+5]=cc[2];
+    const col=hexRgb(NODOS[e.b].color);
+    const hot=mallas[e.b].userData.state==='hot';
+    const f=hot?0.85:0.45;
+    for(let k=0;k<2;k++){ lc[i*6+k*3]=col[0]*f+ (hot?0.25:0); lc[i*6+k*3+1]=col[1]*f+(hot?0.25:0); lc[i*6+k*3+2]=col[2]*f+(hot?0.2:0); }
   });
-  const lg=new THREE.BufferGeometry();
-  lg.setAttribute('position', new THREE.BufferAttribute(lp,3));
-  lg.setAttribute('color', new THREE.BufferAttribute(lc,3));
-  const lineas=new THREE.LineSegments(lg, new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:0.32}));
-  lineas.frustumCulled=false;
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.BufferAttribute(lp,3));
+  g.setAttribute('color',new THREE.BufferAttribute(lc,3));
+  lineas=new THREE.LineSegments(g,new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:0.3}));
+  lineas.frustumCulled=false; lineas.userData.pos=g.attributes.position;
   scene.add(lineas);
+  pEdge=new Uint16Array(NP); for(let i=0;i<NP;i++) pEdge[i]=(Math.random()*aristas.length)|0;
 }
-// partículas doradas viajando hacia el centro por las aristas
-const NP=240;
-const pPos=new Float32Array(NP*3), pT=new Float32Array(NP), pEdge=new Uint16Array(NP);
-for(let i=0;i<NP;i++){ pEdge[i]=(Math.random()*aristas.length)|0; pT[i]=Math.random(); }
+const NP=130;
+const pPos=new Float32Array(NP*3),pT=new Float32Array(NP);
+let pEdge=new Uint16Array(NP);
+for(let i=0;i<NP;i++) pT[i]=Math.random();
 const pGeo=new THREE.BufferGeometry();
-pGeo.setAttribute('position', new THREE.BufferAttribute(pPos,3));
-const puntos=new THREE.Points(pGeo, new THREE.PointsMaterial({color:0xffe2a0,size:0.85,transparent:true,
-  opacity:0.8,depthWrite:false,blending:THREE.AdditiveBlending}));
-puntos.frustumCulled=false;
-scene.add(puntos);
+pGeo.setAttribute('position',new THREE.BufferAttribute(pPos,3));
+const puntos=new THREE.Points(pGeo,new THREE.PointsMaterial({color:0xffe6b3,size:0.8,transparent:true,
+ opacity:0.75,depthWrite:false,blending:THREE.AdditiveBlending}));
+puntos.frustumCulled=false; scene.add(puntos);
 
 // ================= POSTPROCESADO =================
-const renderPipeline = new THREE.RenderPipeline(renderer);
-const scenePass = pass(scene, camera);
-const scenePassColor = scenePass.getTextureNode('output');
-const bloomPass = bloom(scenePassColor, 0.32, 0.5, 0.78); // suave: solo un velo de luz
-renderPipeline.outputNode = scenePassColor.add(bloomPass);
+const renderPipeline=new THREE.RenderPipeline(renderer);
+const scenePass=pass(scene,camera);
+const scenePassColor=scenePass.getTextureNode('output');
+const bloomPass=bloom(scenePassColor,0.28,0.55,0.8);
+renderPipeline.outputNode=scenePassColor.add(bloomPass);
 
 // ================= CONTROLES =================
-const controls = new OrbitControls(camera, renderer.domElement);
+const controls=new OrbitControls(camera,renderer.domElement);
 controls.target.set(0,2,0);
-controls.enableDamping=true; controls.dampingFactor=0.06;
+controls.enableDamping=true;controls.dampingFactor=0.06;
 controls.enablePan=false;
-controls.autoRotate = !reducido; controls.autoRotateSpeed=0.55;
-controls.minDistance=38; controls.maxDistance=150;
-controls.maxPolarAngle=Math.PI*0.74; controls.minPolarAngle=Math.PI*0.16;
-controls.enabled=false; // hasta que termine la apertura
+controls.autoRotate=!reducido;controls.autoRotateSpeed=0.5;
+controls.minDistance=26;controls.maxDistance=150;
+controls.maxPolarAngle=Math.PI*0.72;controls.minPolarAngle=Math.PI*0.18;
+controls.enabled=false;
 controls.update();
 
-// ================= INTERACCIÓN =================
-const ray=new THREE.Raycaster(), raton=new THREE.Vector2();
-const tarjeta=document.getElementById('tarjeta');
-function mostrar(n){
-  document.getElementById('t-nombre').textContent=n.userData.nombre;
-  document.getElementById('t-desc').textContent=n.userData.desc||'';
-  document.getElementById('t-nombre').style.color=n.userData.color;
-  tarjeta.style.display = n.userData.desc ? 'block':'none';
-  const mm=MAPA_NODO_MISION[n.userData.nombre];
-  if(mm){ bVerMision.style.display='inline-block';
-    bVerMision.onclick=()=>{ try{ parent.postMessage({type:'nassar-ver-mision',mision:mm},location.origin); }catch(e){} };
-  } else bVerMision.style.display='none';
+// ================= NAVEGACIÓN POR NIVELES =================
+const clock=new THREE.Clock();
+let path=[], focoId='cerebro', tween=null;
+const CAMD=[{p:[0,20,72],t:[0,2,0]},{p:[0,15,56],t:[0,1,0]},{p:[0,12,46],t:[0,1,0]}];
+const crumbsEl=document.getElementById('crumbs'), atrasBtn=document.getElementById('atras');
+
+function actualizarMigas(){
+  const items=['nassar',...path.map(id=>NODOS[id].label)];
+  crumbsEl.innerHTML=items.map((c,i)=>{
+    const sep=i?'<span class="sep">/</span>':'';
+    const cls=i===items.length-1?'crumb ult':'crumb';
+    return sep+`<span class="${cls}" data-i="${i}">${c}</span>`;
+  }).join('');
+  crumbsEl.querySelectorAll('.crumb:not(.ult)').forEach(el=>{
+    el.onclick=()=>navegar(path.slice(0,parseInt(el.dataset.i)));
+  });
+  atrasBtn.style.display=path.length?'block':'none';
 }
-document.getElementById('cerrar').onclick=()=>tarjeta.style.display='none';
-let px=0, py=0, movido=0;
-canvas.addEventListener('pointerdown',e=>{ px=e.clientX; py=e.clientY; movido=0; if(!tween) controls.autoRotate=!reducido; });
-canvas.addEventListener('pointermove',e=>{ movido+=Math.abs(e.movementX||0)+Math.abs(e.movementY||0); });
+atrasBtn.onclick=()=>navegar(path.slice(0,-1));
+
+function navegar(nuevoPath,moverCamara=true){
+  path=nuevoPath.slice();
+  focoId=path.length?path[path.length-1]:'cerebro';
+  const foco=NODOS[focoId],hijos=foco.hijos,prof=Math.min(path.length,2);
+  const rFoco=[3.4,2.7,2.3][prof],rHijo=[2.0,1.15,0.95][prof];
+  const R=hijos.length<=1?17:Math.min(30,13+hijos.length*2.4);
+  const t=clock.elapsedTime;
+  for(const id of orden){
+    const u=mallas[id].userData;
+    if(id===focoId){ u.vis=true;u.rT=rFoco;u.baseT.set(0,0,0);u.delay=0; }
+    else{ const j=hijos.indexOf(id);
+      if(j>=0){ u.vis=true;u.rT=rHijo;
+        const ang=(j/hijos.length)*Math.PI*2-Math.PI/2;
+        u.baseT.set(Math.cos(ang)*R,0,Math.sin(ang)*R);
+        u.delay=0.1+j*0.07;
+      } else { u.vis=false;u.rT=0.0001; }
+    }
+    u.navT=t;
+  }
+  reconstruirAristas(focoId);
+  actualizarMigas();
+  ocultarDetalle();
+  if(moverCamara){
+    const c=CAMD[prof];
+    tween={t:0,dur:1.15,fromP:camera.position.clone(),toP:new THREE.Vector3(...c.p),
+      fromT:controls.target.clone(),toT:new THREE.Vector3(...c.t)};
+    controls.autoRotate=false;
+  }
+}
+
+// ================= ESTADOS =================
+function aplicarEstado(id,estado){
+  const u=mallas[id].userData;
+  if(estado==='activo'||estado==='en_curso'){ u.state='hot';
+    u.uAmp.value=0.22;u.uBright.value=1.65;u.halo.material.opacity=0.6;
+  }else if(estado==='pendiente'){ u.state='dim';
+    u.uAmp.value=0.05;u.uBright.value=0.7;u.halo.material.opacity=0.22;
+  }else{ u.state='normal';
+    u.uAmp.value=0.08;u.uBright.value=(id==='cerebro')?1.5:1.15;u.halo.material.opacity=0.32;
+  }
+}
+
+// ================= HUD =================
+const ahoraTxt=document.getElementById('ahora-txt'),ultLista=document.getElementById('ult-lista');
+const chipsEl=document.getElementById('chips'),mrowsEl=document.getElementById('mrows');
+const detalleEl=document.getElementById('detalle');
+let misiones=[],chipFiltro='todas';
+const NOMBRE_EST={en_curso:'EN CURSO',pendiente:'PENDIENTE',activo:'ACTIVO',hecho:'HECHO'};
+function renderMisiones(){
+  const c={todas:misiones.length,en_curso:0,pendiente:0,activo:0};
+  misiones.forEach(m=>{ if(c[m.estado]!==undefined) c[m.estado]++; });
+  chipsEl.innerHTML=['todas','en_curso','pendiente','activo'].map(k=>
+    `<span class="chip${chipFiltro===k?' on':''}" data-k="${k}">${k==='todas'?'TODAS':NOMBRE_EST[k]} ${c[k]||0}</span>`).join('');
+  chipsEl.querySelectorAll('.chip').forEach(ch=>ch.onclick=()=>{chipFiltro=ch.dataset.k;renderMisiones();});
+  const rows=misiones.filter(m=>chipFiltro==='todas'||m.estado===chipFiltro);
+  mrowsEl.innerHTML=rows.map(m=>{
+    const clic=MAPA_MISIONES[m.nombre]?' style="cursor:pointer"':'';
+    return `<div class="mrow" data-m="${m.nombre}"${clic}><div class="nm">${m.nombre}<span class="dt">${m.detalle||''}</span></div><span class="pill ${m.estado}">${NOMBRE_EST[m.estado]||m.estado}</span></div>`;
+  }).join('')||'<div style="color:#A3A098;font-size:13px;padding:8px 4px">Sin misiones.</div>';
+  mrowsEl.querySelectorAll('.mrow[data-m]').forEach(r=>{
+    r.onclick=()=>{ if(MAPA_MISIONES[r.dataset.m]) enfocarMision(r.dataset.m); };
+  });
+}
+chipsEl.addEventListener('click',e=>e.stopPropagation());
+const NODO_MISION={}; for(const k in MAPA_MISIONES) NODO_MISION[MAPA_MISIONES[k]]=k;
+let seleccionado=null;
+function mostrarDetalle(id){
+  const n=NODOS[id],u=mallas[id].userData;
+  seleccionado=id;
+  document.getElementById('d-nombre').innerHTML=`<span class="dot" style="background:${n.color}"></span>${n.nombre}`;
+  document.getElementById('d-desc').textContent=n.desc||'';
+  const est=u.state==='hot'?'EN CURSO':u.state==='dim'?'PENDIENTE':'';
+  document.getElementById('d-meta').textContent=
+    (n.hijos.length?n.hijos.length+' SUBNODOS':'NODO FINAL')+(est?' · '+est:'');
+  const btns=document.getElementById('d-btns'); btns.innerHTML='';
+  if(n.hijos.length){
+    const b=document.createElement('button'); b.className='btn oro'; b.textContent='Entrar →';
+    b.onclick=()=>navegar(path.concat([id])); btns.appendChild(b);
+  }
+  const mm=NODO_MISION[id];
+  if(mm){
+    const b=document.createElement('button'); b.className='btn'; b.textContent='Ver en En vivo →';
+    b.onclick=()=>{ try{parent.postMessage({type:'nassar-ver-mision',mision:mm},location.origin);}catch(e){} };
+    btns.appendChild(b);
+  }
+  detalleEl.classList.remove('vis'); void detalleEl.offsetWidth; detalleEl.classList.add('vis');
+  detalleEl.style.display='block';
+}
+function ocultarDetalle(){ detalleEl.style.display='none'; seleccionado=null; }
+document.getElementById('d-cerrar').onclick=ocultarDetalle;
+document.getElementById('btn-panel').onclick=()=>document.getElementById('panel-misiones').classList.toggle('abierto');
+function tickReloj(){ const f=new Date();
+  document.getElementById('reloj').textContent=String(f.getHours()).padStart(2,'0')+':'+String(f.getMinutes()).padStart(2,'0'); }
+tickReloj(); setInterval(tickReloj,15000);
+
+// ================= INTERACCIÓN =================
+const ray=new THREE.Raycaster(),raton=new THREE.Vector2();
+let movido=0,hoverId=null;
+function visibles(){ return orden.filter(id=>mallas[id].userData.r>0.4).map(id=>mallas[id]); }
+function pick(e){
+  raton.x=(e.clientX/innerWidth)*2-1; raton.y=-(e.clientY/innerHeight)*2+1;
+  ray.setFromCamera(raton,camera);
+  const hit=ray.intersectObjects(visibles(),false)[0];
+  return hit?hit.object.userData.id:null;
+}
+canvas.addEventListener('pointerdown',()=>{ movido=0; if(!tween) controls.autoRotate=!reducido; });
+canvas.addEventListener('pointermove',e=>{
+  movido+=Math.abs(e.movementX||0)+Math.abs(e.movementY||0);
+  const id=pick(e);
+  if(id!==hoverId){ hoverId=id; canvas.style.cursor=id?'pointer':'default';
+    for(const oid of orden){ const u=mallas[oid].userData;
+      u.halo.material.opacity=(oid===id)?0.75:(u.state==='hot'?0.6:u.state==='dim'?0.22:0.32); } }
+});
 canvas.addEventListener('pointerup',e=>{
   if(movido<8){
-    raton.x=(e.clientX/innerWidth)*2-1; raton.y=-(e.clientY/innerHeight)*2+1;
-    ray.setFromCamera(raton,camera);
-    const hit=ray.intersectObjects(nodosMalla)[0];
-    if(hit) mostrar(hit.object); else { tarjeta.style.display='none'; limpiarFoco(); }
+    const id=pick(e);
+    if(id){ if(NODOS[id].hijos.length) navegar(path.concat([id])); else mostrarDetalle(id); }
+    else ocultarDetalle();
   }
 });
-
-// ================= ESTADOS DE MISIÓN (lo activo se ve) =================
-function aplicarEstado(nodo, estado){
-  const u=nodo.userData;
-  if(estado==='activo' || estado==='en_curso'){
-    u.state='hot';
-    u.uAmp.value=0.22; u.uBright.value=1.6;
-    u.halo.scale.set(u.baseHalo*1.5, u.baseHalo*1.5, 1);
-    u.halo.material.opacity=0.6;
-  } else if(estado==='pendiente'){
-    u.state='dim';
-    u.uAmp.value=0.05; u.uBright.value=0.7;
-    u.halo.scale.set(u.baseHalo*0.75, u.baseHalo*0.75, 1);
-    u.halo.material.opacity=0.25;
-  } else {
-    u.state='normal';
-    u.uAmp.value=0.10; u.uBright.value = (u.nombre==="CEREBRO") ? 1.5 : 1.18;
-    u.halo.scale.set(u.baseHalo, u.baseHalo, 1);
-    u.halo.material.opacity=0.5;
-  }
+function enfocarMision(nombre){
+  const nn=MAPA_MISIONES[nombre]||nombre;
+  if(!NODOS[nn]) return;
+  const p=[]; let c=nn;
+  while(PADRE[c]){ p.unshift(c); c=PADRE[c]; }
+  navegar(p);
+  setTimeout(()=>mostrarDetalle(nn),reducido?100:900);
 }
 
-// ================= MENSAJES DESDE LA APP =================
-addEventListener('message', e=>{
-  if(!e.data) return;
-  if(e.data.type==='nassar-descs' && e.data.descs){
-    nodosMalla.forEach(m=>{
-      const d=e.data.descs[m.userData.nombre];
-      if(d) m.userData.desc=d;
-    });
+// ================= MENSAJES =================
+addEventListener('message',e=>{
+  if(e.origin!==location.origin||!e.data) return;
+  const d=e.data;
+  if(d.type==='nassar-descs'&&d.descs){
+    for(const id in mallas){ const t=d.descs[mallas[id].userData.nombre];
+      if(t){ mallas[id].userData.desc=t; NODOS[id].desc=t; } }
+    if(seleccionado) mostrarDetalle(seleccionado);
   }
-  if(e.data.type==='nassar-misiones' && Array.isArray(e.data.misiones)){
-    e.data.misiones.forEach(mi=>{
-      const nn=MAPA_MISIONES[mi.nombre];
-      if(!nn) return; // "App Nassar en vivo" no es nodo: se ignora
-      const nodo=nodosPorNombre[nn];
-      if(nodo) aplicarEstado(nodo, mi.estado);
-    });
+  if(d.type==='nassar-misiones'&&Array.isArray(d.misiones)){
+    misiones=d.misiones; renderMisiones();
+    d.misiones.forEach(mi=>{ const nn=MAPA_MISIONES[mi.nombre];
+      if(nn&&mallas[nn]) aplicarEstado(nn,mi.estado); });
+    reconstruirAristas(focoId);
+    if(seleccionado) mostrarDetalle(seleccionado);
   }
+  if(d.type==='nassar-resumen'){
+    if(typeof d.ahora==='string') ahoraTxt.textContent=d.ahora;
+    if(Array.isArray(d.ultimo)) ultLista.innerHTML=d.ultimo.map(u=>`<li>${u}</li>`).join('')||'<li>—</li>';
+  }
+  if(d.type==='nassar-focus') enfocarMision(d.mision);
 });
 
-// leyenda
-document.getElementById('leyenda').innerHTML =
-  `<div><span class="dot" style="background:${CENTRO.color};color:${CENTRO.color}"></span>Cerebro central</div>` +
-  GRUPOS.map(g=>`<div><span class="dot" style="background:${g.color};color:${g.color}"></span>${g.nombre}</div>`).join('');
-
 // ================= BUCLE =================
-function resize(){ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); }
+function resize(){ camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight); }
 addEventListener('resize',resize); resize();
+const camStartV=new THREE.Vector3(0,64,175);
+let introT=reducido?1:0,primerFrame=true;
+navegar([],false);
+renderMisiones();
+if(window.__nassarQ&&window.__nassarQ.length) window.__nassarQ.splice(0).forEach(d=>{ try{
+  if(d.type==='nassar-focus') enfocarMision(d.mision);
+}catch(e){} });
 
-const clock=new THREE.Clock();
-let introT = reducido ? 1 : 0;
-let primerFrame=true;
 renderer.setAnimationLoop(()=>{
-  const dt=Math.min(clock.getDelta(), 0.05);
-  const t=clock.elapsedTime;
-  // apertura cinematográfica
+  const dt=Math.min(clock.getDelta(),0.05),t=clock.elapsedTime;
   if(introT<1){
-    introT=Math.min(1, introT+dt/3.4);
+    introT=Math.min(1,introT+dt/2.6);
     const k=easeInOutCubic(introT);
-    camera.position.lerpVectors(camStart, camEnd, k);
+    camera.position.lerpVectors(camStartV,new THREE.Vector3(0,20,72),k);
     camera.lookAt(0,2,0);
-    if(introT>=1){ controls.enabled=true;
-      if(focusPendiente){ const fp=focusPendiente; focusPendiente=null; enfocar(fp); } }
-  } else if(!controls.enabled){ controls.enabled=true; }
+    if(introT>=1) controls.enabled=true;
+  } else if(!controls.enabled) controls.enabled=true;
   if(tween){
     tween.t+=dt/tween.dur;
     const k=easeInOutCubic(Math.min(1,tween.t));
     camera.position.lerpVectors(tween.fromP,tween.toP,k);
     controls.target.lerpVectors(tween.fromT,tween.toT,k);
-    if(tween.t>=1) tween=null;
+    if(tween.t>=1){ tween=null; if(!reducido) controls.autoRotate=true; }
   }
   controls.update();
-  // aparición escalonada de nodos
-  for(const n of nodosMalla){
-    const u=n.userData;
-    const s=easeOutBack(clamp01((t-u.nacimiento)/0.6));
-    const sc=Math.max(0.0001, s);
-    n.scale.setScalar(sc);
-    const foc=(n===focoNodo)?1.6:1;
-    const hs=Math.max(0.0001, u.baseHalo*(u.state==='hot'?1.7:u.state==='dim'?0.75:1)*foc*s);
+  for(const id of orden){
+    const m=mallas[id],u=m.userData;
+    u.r+=(u.rT-u.r)*Math.min(1,dt*5);
+    u.base.lerp(u.baseT,Math.min(1,dt*4));
+    const s=easeOutBack(clamp01((t-u.navT-u.delay)/0.55));
+    const rr=Math.max(0.0001,u.r*Math.max(0.0001,s));
+    m.scale.setScalar(rr);
+    const fx=reducido?0:Math.sin(t*0.8+u.fase)*0.35;
+    const fz=reducido?0:Math.cos(t*0.6+u.fase)*0.35;
+    m.position.set(u.base.x+fx,u.base.y,u.base.z+fz);
+    u.halo.position.copy(m.position);
+    const hs=Math.max(0.0001,rr*8.2*(u.state==='hot'?1.6:u.state==='dim'?0.7:1));
     u.halo.scale.set(hs,hs,1);
-    if(u.etiqueta) u.etiqueta.material.opacity=clamp01((t-u.nacimiento-0.25)/0.5);
-    if(u.etiqueta2) u.etiqueta2.material.opacity=clamp01((t-u.nacimiento-0.25)/0.5);
+    u.etiqueta.position.set(m.position.x,m.position.y+rr+2.1,m.position.z);
+    u.etiqueta.material.opacity=clamp01((t-u.navT-u.delay-0.2)/0.4);
   }
-  // vida ambiental
-
+  if(lineas){
+    const arr=lineas.userData.pos.array;
+    for(let i=0;i<aristas.length;i++){
+      const pa=mallas[aristas[i].a].position,pb=mallas[aristas[i].b].position;
+      arr[i*6]=pa.x;arr[i*6+1]=pa.y;arr[i*6+2]=pa.z;
+      arr[i*6+3]=pb.x;arr[i*6+4]=pb.y;arr[i*6+5]=pb.z;
+    }
+    lineas.userData.pos.needsUpdate=true;
+  }
   for(let i=0;i<NP;i++){
-    pT[i]+=dt*0.22;
+    pT[i]+=dt*0.2;
     if(pT[i]>1){ pT[i]=0; pEdge[i]=(Math.random()*aristas.length)|0; }
-    const e=aristas[pEdge[i]], k=pT[i];
-    pPos[i*3]  =e.a.x+(e.b.x-e.a.x)*k;
-    pPos[i*3+1]=e.a.y+(e.b.y-e.a.y)*k;
-    pPos[i*3+2]=e.a.z+(e.b.z-e.a.z)*k;
+    const e=aristas[pEdge[i]],k=pT[i];
+    if(!e) continue;
+    const pa=mallas[e.a].position,pb=mallas[e.b].position;
+    pPos[i*3]=pa.x+(pb.x-pa.x)*k;
+    pPos[i*3+1]=pa.y+(pb.y-pa.y)*k;
+    pPos[i*3+2]=pa.z+(pb.z-pa.z)*k;
   }
   pGeo.attributes.position.needsUpdate=true;
   renderPipeline.render();
   if(primerFrame){ primerFrame=false;
-    setTimeout(()=>{ document.getElementById('intro').style.opacity='0'; }, 350); }
+    setTimeout(()=>{ document.getElementById('intro').style.opacity='0'; },350); }
 });
-
-// ================= FOCO PANEL <-> CEREBRO =================
-const MAPA_NODO_MISION={};
-for(const k in MAPA_MISIONES) MAPA_NODO_MISION[MAPA_MISIONES[k]]=k;
-const bVerMision=document.getElementById('b-ver-mision');
-let focoNodo=null, tween=null, focusPendiente=null;
-
-function limpiarFoco(){
-  const n=focoNodo; focoNodo=null;
-  if(!n||!n.userData._snap) return;
-  const s=n.userData._snap, u=n.userData;
-  u.uAmp.value=s.amp; u.uBright.value=s.bright; u.halo.material.opacity=s.hop;
-}
-function enfocar(nombreMision){
-  const nn=MAPA_MISIONES[nombreMision]||(nodosPorNombre[nombreMision]?nombreMision:null);
-  const n=nn?nodosPorNombre[nn]:null;
-  if(!n) return;
-  if(introT<1){ focusPendiente=nombreMision; return; }
-  limpiarFoco();
-  const u=n.userData;
-  u._snap={amp:u.uAmp.value, bright:u.uBright.value, hop:u.halo.material.opacity};
-  u.uAmp.value=0.28; u.uBright.value=1.8; u.halo.material.opacity=0.7;
-  focoNodo=n;
-  mostrar(n);
-  const dir=camera.position.clone().sub(controls.target).normalize();
-  tween={t:0,dur:1.15,
-    fromP:camera.position.clone(), toP:n.position.clone().add(dir.multiplyScalar(42)),
-    fromT:controls.target.clone(), toT:n.position.clone()};
-  controls.autoRotate=false;
-}
-addEventListener('message',e=>{
-  if(e.origin!==location.origin||!e.data) return;
-  if(e.data.type==='nassar-focus') enfocar(e.data.mision);
-});
-if(window.__nassarQ&&window.__nassarQ.length){
-  window.__nassarQ.splice(0).forEach(d=>{ try{enfocar(d.mision);}catch(e){} });
-}
 </script>
 </body>
 </html>
