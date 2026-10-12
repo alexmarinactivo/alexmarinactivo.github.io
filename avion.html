@@ -23,7 +23,7 @@
 @font-face{font-family:'Kode Mono';src:url('vendor/fonts/kode-mono-600.woff2') format('woff2');font-weight:600;font-display:swap}
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;overflow:hidden;
- background:radial-gradient(120% 90% at 50% 30%, #2A2B30 45%, #151619 100%);
+ background:#000000;
  color:#ECEAE3;font-family:'Inter',-apple-system,"Segoe UI",Roboto,sans-serif;
  -webkit-tap-highlight-color:transparent}
 #c{position:fixed;inset:0;display:block;touch-action:none}
@@ -53,7 +53,7 @@ html,body{width:100%;height:100%;overflow:hidden;
 #d-cerrar{position:absolute;top:10px;right:14px;color:#A3A098;font-size:20px;cursor:pointer;padding:4px;pointer-events:auto}
 #ayuda{bottom:18px;left:0;right:0;text-align:center;color:#6f6c63;font-size:11.5px;letter-spacing:1.5px;
  font-family:'Kode Mono',monospace;animation:aparicion 1.2s ease 1.2s both}
-#intro{position:fixed;inset:0;background:#151619;z-index:40;pointer-events:none;transition:opacity 1.6s ease}
+#intro{position:fixed;inset:0;background:#000000;z-index:40;pointer-events:none;transition:opacity 1.6s ease}
 #err3d{position:fixed;inset:0;display:none;align-items:center;justify-content:center;color:#A3A098;
  font-size:14px;text-align:center;padding:30px;z-index:20}
 @keyframes aparicion{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -201,13 +201,11 @@ const scene=new THREE.Scene();
 (function fondo(){
   const c=document.createElement('canvas'); c.width=c.height=512;
   const x=c.getContext('2d');
-  const g=x.createRadialGradient(256,150,40,256,256,380);
-  g.addColorStop(0,'#2E2F34'); g.addColorStop(0.45,'#222326'); g.addColorStop(1,'#141518');
-  x.fillStyle=g; x.fillRect(0,0,512,512);
+  x.fillStyle='#000000'; x.fillRect(0,0,512,512);
   const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace;
   scene.background=t;
 })();
-scene.fog=new THREE.FogExp2(0x17181c,0.0022);
+scene.fog=new THREE.FogExp2(0x000000,0.0022);
 const camera=new THREE.PerspectiveCamera(50,innerWidth/innerHeight,0.1,1200);
 camera.position.set(0,150,330); camera.lookAt(0,0,0);
 
@@ -249,7 +247,7 @@ function etiquetaMono(texto,fs){
 }
 function materialNodo(hex){
   const mat=new THREE.MeshBasicNodeMaterial();
-  const uAmp=uniform(0.06),uBright=uniform(1.15),uPhase=uniform(Math.random()*6.28);
+  const uAmp=uniform(0.06),uBright=uniform(1.0),uPhase=uniform(Math.random()*6.28);
   mat.colorNode=color(hex).mul(uBright).mul(
     float(1).sub(uAmp).add(uAmp.mul(float(0.5).add(float(0.5).mul(sin(time.mul(float(1.4)).add(uPhase)))))));
   mat.userData={uAmp,uBright};
@@ -262,24 +260,24 @@ POSA['cerebro']=new THREE.Vector3(0,0,0);
 const secs=NODOS['cerebro'].hijos;
 secs.forEach((s,i)=>{ const a=(i/secs.length)*Math.PI*2-Math.PI/2;
   POSA[s]=new THREE.Vector3(Math.cos(a)*34,0,Math.sin(a)*34); });
+const RADIO_NIVEL={2:11.5,3:5.8};
 for(const id of Object.keys(NODOS)){
-  if(PROF[id]===2){ const p=PADRE[id],sib=NODOS[p].hijos,j=sib.indexOf(id);
-    const a=(j/sib.length)*Math.PI*2;
-    POSA[id]=POSA[p].clone().add(new THREE.Vector3(Math.cos(a)*11.5,0,Math.sin(a)*11.5)); }
-  if(PROF[id]===3){ const p=PADRE[id],sib=NODOS[p].hijos,j=sib.indexOf(id);
-    const a=(j/sib.length)*Math.PI*2+0.5;
-    POSA[id]=POSA[p].clone().add(new THREE.Vector3(Math.cos(a)*5.8,0,Math.sin(a)*5.8)); }
+  const p=PROF[id];
+  if(p>=2){ const par=PADRE[id],sib=NODOS[par].hijos,j=sib.indexOf(id);
+    const rr=RADIO_NIVEL[p]||3.4;
+    const a=(j/sib.length)*Math.PI*2+p*0.5;
+    POSA[id]=POSA[par].clone().add(new THREE.Vector3(Math.cos(a)*rr,0,Math.sin(a)*rr)); }
 }
-const RAD=[3.4,2.0,1.05,0.72];
+const RAD=[3.4,2.0,1.05,0.72,0.55];
 
 // ================= NODOS =================
 const mallas={}, orden=Object.keys(NODOS);
 for(const id of orden){
-  const n=NODOS[id],prof=PROF[id],r=RAD[Math.min(prof,3)];
+  const n=NODOS[id],prof=PROF[id],r=RAD[Math.min(prof,4)];
   const mat=materialNodo(n.color);
   const m=new THREE.Mesh(new THREE.SphereGeometry(1,20,20),mat);
   m.scale.setScalar(r);
-  m.position.copy(POSA[id]);
+  m.position.copy(POSA[id]||new THREE.Vector3());
   const halo=new THREE.Sprite(new THREE.SpriteMaterial({map:GLOW,color:n.color,transparent:true,
     opacity:0.24,depthWrite:false,fog:false,blending:THREE.AdditiveBlending}));
   const hs=r*8;
@@ -292,7 +290,7 @@ for(const id of orden){
   const u={id,nombre:n.nombre,color:n.color,halo,etiqueta:lab,
     uAmp:mat.userData.uAmp,uBright:mat.userData.uBright,
     state:'normal',r,fase:Math.random()*6.28,delay:Math.random()*1.2};
-  if(id==='cerebro') u.uBright.value=1.5;
+  if(id==='cerebro') u.uBright.value=1.35;
   m.userData=u;
   scene.add(m); mallas[id]=m;
 }
