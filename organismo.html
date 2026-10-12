@@ -208,7 +208,7 @@ for(const id of Object.keys(NODOS)){
   if(p>=2){ const par=PADRE[id], sib=NODOS[par].hijos, j=sib.indexOf(id);
     const rr=RADIO_NIVEL[p]||3.4;
     const a=(j/sib.length)*Math.PI*2+p*0.5;
-    POSA[id]=new THREE.Vector3(POSA[par].x+Math.cos(a)*rr,(p-1)*2.4,POSA[par].z+Math.sin(a)*rr); }
+    POSA[id]=new THREE.Vector3(POSA[par].x+Math.cos(a)*rr,(p-1)*4.2,POSA[par].z+Math.sin(a)*rr); }
 }
 const RAD=[3.4,2.0,1.05,0.72,0.55];
 
@@ -259,15 +259,12 @@ const controls=new OrbitControls(camera,renderer.domElement);
 controls.target.set(0,0,0);
 controls.enableDamping=true; controls.dampingFactor=0.06;
 controls.enablePan=false;
-controls.autoRotate=true; controls.autoRotateSpeed=0.35;
+controls.autoRotate=false;
 controls.minDistance=40; controls.maxDistance=520;
 controls.maxPolarAngle=Math.PI; controls.minPolarAngle=0;
 controls.update();
-let idleTimer=null;
 const cvs=renderer.domElement;
-cvs.addEventListener('pointerdown',()=>{ controls.autoRotate=false; if(idleTimer) clearTimeout(idleTimer); });
-cvs.addEventListener('pointerup',()=>{ if(idleTimer) clearTimeout(idleTimer);
-  idleTimer=setTimeout(()=>controls.autoRotate=true,8000); });
+
 
 /* interacción */
 const ray=new THREE.Raycaster(), raton=new THREE.Vector2();
