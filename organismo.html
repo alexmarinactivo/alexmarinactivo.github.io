@@ -23,7 +23,7 @@
 @font-face{font-family:'Kode Mono';src:url('vendor/fonts/kode-mono-600.woff2') format('woff2');font-weight:600;font-display:swap}
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;overflow:hidden;
- background:#000000;
+ background:radial-gradient(120% 90% at 50% 30%, #2A2B30 45%, #151619 100%);
  color:#ECEAE3;font-family:'Inter',-apple-system,"Segoe UI",Roboto,sans-serif;
  -webkit-tap-highlight-color:transparent}
 #c{position:fixed;inset:0;display:block;touch-action:none}
@@ -88,7 +88,7 @@ html,body{width:100%;height:100%;overflow:hidden;
 #d-cerrar{position:absolute;top:10px;right:14px;color:#A3A098;font-size:20px;cursor:pointer;padding:4px;pointer-events:auto}
 #ayuda{bottom:18px;left:0;right:0;text-align:center;color:#6f6c63;font-size:11.5px;letter-spacing:1.5px;
  font-family:'Kode Mono',monospace;animation:aparicion 1.2s ease 1.2s both}
-#intro{position:fixed;inset:0;background:#000000;z-index:40;pointer-events:none;transition:opacity 1.6s ease}
+#intro{position:fixed;inset:0;background:#151619;z-index:40;pointer-events:none;transition:opacity 1.6s ease}
 #err3d{position:fixed;inset:0;display:none;align-items:center;justify-content:center;color:#A3A098;
  font-size:14px;text-align:center;padding:30px;z-index:20}
 #btn-panel{display:none}
@@ -195,8 +195,13 @@ try{
   renderer=new THREE.WebGPURenderer({canvas,antialias:true});
   renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
   renderer.toneMapping=THREE.ACESFilmicToneMapping;
-  await renderer.init();
-}catch(e){ document.getElementById('err3d').style.display='flex'; throw e; }
+  await Promise.race([renderer.init(), new Promise((_,rej)=>setTimeout(()=>rej(new Error('gpu-timeout')),9000))]);
+}catch(e){
+  var d=document.getElementById('err3d');
+  d.style.display='flex';
+  d.innerHTML='<div>El 3D no arrancó aquí.<br><br><button id="btn-reintentar" style="padding:12px 28px;border-radius:999px;border:0;background:#FFD54F;color:#111;font-weight:700;font-size:15px">Reintentar</button></div>';
+  document.getElementById('btn-reintentar').onclick=function(){ location.reload(); };
+  throw e; }
 try{ await Promise.race([Promise.all([
   document.fonts.load('600 40px "Kode Mono"'),document.fonts.load('400 40px "Instrument Serif"'),document.fonts.load('600 16px "Inter"')
  ]), new Promise(r=>setTimeout(r,2500))]); }catch(e){}
@@ -205,11 +210,13 @@ const scene=new THREE.Scene();
 (function fondo(){ // degradado radial cálido estilo JEV (procedural, offline)
   const c=document.createElement('canvas'); c.width=c.height=512;
   const x=c.getContext('2d');
-  x.fillStyle='#000000'; x.fillRect(0,0,512,512);
+    const g=x.createRadialGradient(256,150,40,256,256,360);
+  g.addColorStop(0,'#2E2F34'); g.addColorStop(0.45,'#222326'); g.addColorStop(1,'#141518');
+  x.fillStyle=g; x.fillRect(0,0,512,512);
   const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace;
   scene.background=t;
 })();
-scene.fog=new THREE.FogExp2(0x000000,0.006);
+scene.fog=new THREE.FogExp2(0x17181c,0.006);
 const camera=new THREE.PerspectiveCamera(50,innerWidth/innerHeight,0.1,600);
 camera.position.set(0,64,175); camera.lookAt(0,2,0);
 
