@@ -1,6 +1,6 @@
-const CACHE='nassar-v4';
+const CACHE='nassar-v5';
 const SHELL=['manifest.json','icon-192.png','icon-512.png','cerebro.html','organismo.html','nassar-crypto.js',
- 'vendor/three.webgpu.js','vendor/three.core.js','vendor/three.tsl.js',
+ 'vendor/three.webgpu.js','vendor/three.core.js','vendor/three.tsl.js','vendor/d3-force-3d.bundle.js',
  'vendor/addons/OrbitControls.js','vendor/addons/BloomNode.js'];
 self.addEventListener('install',e=>{
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()));
