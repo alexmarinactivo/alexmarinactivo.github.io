@@ -613,6 +613,10 @@ const camStartV=new THREE.Vector3(0,64,175);
 let introT=reducido?1:0,primerFrame=true;
 navegar([],false);
 renderMisiones();
+{ const qs=new URLSearchParams(location.search).get('s');
+  if(qs && NODOS[qs]){ const pa=[]; let cc=qs;
+    while(cc && cc!=='cerebro'){ pa.unshift(cc); cc=PADRE[cc]; }
+    if(pa.length) navegar(pa,false); } }
 if(window.__nassarQ&&window.__nassarQ.length) window.__nassarQ.splice(0).forEach(d=>{ try{
   if(d.type==='nassar-focus') enfocarMision(d.mision);
 }catch(e){} });
