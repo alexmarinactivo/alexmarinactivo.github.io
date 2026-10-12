@@ -12,69 +12,73 @@
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
+@font-face{font-family:'Inter';src:url('vendor/fonts/inter-400.woff2') format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:'Inter';src:url('vendor/fonts/inter-600.woff2') format('woff2');font-weight:600;font-display:swap}
+@font-face{font-family:'Inter';src:url('vendor/fonts/inter-700.woff2') format('woff2');font-weight:700;font-display:swap}
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%;background:#05060a;color:#eef1f7;
- font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+html,body{height:100%;background:#101014;color:#F2F0EA;
+ font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
  -webkit-tap-highlight-color:transparent}
 #app{display:flex;flex-direction:column;height:100dvh}
-header{padding:14px 18px 10px;border-bottom:1px solid rgba(255,255,255,.08);
- display:flex;align-items:center;gap:10px}
-.pulso{width:11px;height:11px;border-radius:50%;background:#4ade80;flex:none;animation:pulso 1.6s infinite}
-@keyframes pulso{0%{box-shadow:0 0 0 0 rgba(74,222,128,.6)}70%{box-shadow:0 0 0 9px rgba(74,222,128,0)}100%{box-shadow:0 0 0 0 rgba(74,222,128,0)}}
-header h1{font-size:17px;letter-spacing:1px}
-header small{display:block;font-size:11px;color:#8a93a6;font-weight:400}
-main{flex:1;overflow-y:auto;padding:16px 16px 90px;-webkit-overflow-scrolling:touch}
+header{padding:22px 22px 12px;display:flex;align-items:center;gap:12px}
+.pulso{width:12px;height:12px;border-radius:50%;background:#4ade80;flex:none;animation:pulso 1.6s infinite}
+@keyframes pulso{0%{box-shadow:0 0 0 0 rgba(74,222,128,.6)}70%{box-shadow:0 0 0 10px rgba(74,222,128,0)}100%{box-shadow:0 0 0 0 rgba(74,222,128,0)}}
+header h1{font-size:21px;font-weight:700;letter-spacing:.5px}
+header small{display:block;font-size:12px;color:#8f8c83;font-weight:400;margin-top:2px}
+main{flex:1;overflow-y:auto;padding:8px 16px 120px;-webkit-overflow-scrolling:touch}
 .vista{display:none}.vista.on{display:block}
-.tarjeta{background:#0d1017;border:1px solid rgba(255,255,255,.09);border-radius:16px;padding:15px 16px;margin-bottom:14px}
-.tarjeta h2{font-size:12px;letter-spacing:1.5px;color:#8a93a6;margin-bottom:10px}
-#ahora{font-size:17px;line-height:1.45}
-.fila{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:15px}
-.fila:last-child{border-bottom:0}
-.fila{cursor:pointer}
-.fila.flash{animation:flashfila 1.8s ease;border-radius:10px}
-@keyframes flashfila{0%{background:rgba(255,213,79,.25)}100%{background:transparent}}
-.pista{font-size:12px;color:#5b6478;margin:0 0 8px}
-.fila .nm{flex:1}
-.fila .dt{display:block;font-size:12px;color:#8a93a6;margin-top:2px}
-.pill{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;flex:none}
-.pill.en_curso{background:rgba(255,167,38,.15);color:#FFA726}
-.pill.pendiente{background:rgba(138,147,166,.15);color:#8a93a6}
-.pill.activo{background:rgba(102,187,106,.15);color:#66BB6A}
-.pill.hecho{background:rgba(102,187,106,.15);color:#66BB6A}
-#ultimo li{list-style:none;font-size:14px;color:#c6cddc;padding:7px 0 7px 24px;position:relative}
-#ultimo li:before{content:"✓";position:absolute;left:2px;color:#4ade80;font-weight:700}
-#refresco{text-align:center;color:#5b6478;font-size:12px;margin-top:6px}
-#vista-cerebro{height:100%}
-#vista-cerebro iframe{width:100%;height:100%;border:0;border-radius:16px;background:#05060a}
-nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:rgba(8,10,15,.96);
- border-top:1px solid rgba(255,255,255,.08);padding:8px 8px calc(10px + env(safe-area-inset-bottom));z-index:10}
-nav button{flex:1;background:none;border:0;color:#8a93a6;font-size:13px;font-weight:600;padding:10px;border-radius:12px;cursor:pointer}
-nav button.on{color:#FFD54F;background:rgba(255,213,79,.1)}
-#onboard{padding:26px 20px;max-width:560px;margin:0 auto}
-#onboard h1{font-size:22px;color:#FFD54F;margin-bottom:12px}
-#onboard p{font-size:15px;line-height:1.6;color:#c6cddc;margin-bottom:14px}
-#onboard button{background:#FFD54F;color:#111;border:0;border-radius:14px;font-size:17px;font-weight:700;
- padding:15px 20px;width:100%;margin:10px 0;cursor:pointer}
-#onboard button.sec{background:#1a1f2b;color:#eef1f7}
+.tarjeta{background:#1A1B20;border-radius:28px;padding:22px;margin-bottom:16px;
+ box-shadow:0 2px 14px rgba(0,0,0,.28)}
+.tarjeta h2{font-size:11px;letter-spacing:2.5px;color:#8f8c83;margin-bottom:12px;font-weight:700}
+#ahora{font-size:17px;line-height:1.55;font-weight:500}
+.fila{display:flex;align-items:center;gap:12px;padding:13px 14px;margin:2px -8px;font-size:15px;
+ border-radius:20px;cursor:pointer}
+.fila:hover{background:rgba(255,255,255,.045)}
+.fila.flash{animation:flashfila 1.8s ease}
+@keyframes flashfila{0%{background:rgba(255,213,79,.28)}100%{background:transparent}}
+.pista{font-size:12.5px;color:#8f8c83;margin:0 0 6px}
+.fila .nm{flex:1;font-weight:600}
+.fila .dt{display:block;font-size:12.5px;color:#b9b6ac;font-weight:400;margin-top:3px}
+.pill{font-size:11px;font-weight:700;padding:7px 14px;border-radius:999px;flex:none;letter-spacing:.4px}
+.pill.en_curso{background:rgba(255,167,38,.16);color:#FFB74D}
+.pill.pendiente{background:rgba(255,255,255,.09);color:#b9b6ac}
+.pill.activo{background:rgba(74,222,128,.15);color:#4ade80}
+.pill.hecho{background:rgba(74,222,128,.15);color:#4ade80}
+#ultimo li{list-style:none;font-size:14px;color:#d8d5cb;padding:8px 0 8px 28px;position:relative;line-height:1.45}
+#ultimo li:before{content:"✓";position:absolute;left:4px;color:#4ade80;font-weight:700}
+#refresco{text-align:center;color:#6f6c63;font-size:12px;margin-top:8px}
+#vista-cerebro,#vista-organismo{height:100%}
+#vista-cerebro iframe,#vista-organismo iframe{width:100%;height:100%;border:0;border-radius:28px;background:#151619}
+nav{position:fixed;left:16px;right:16px;bottom:calc(14px + env(safe-area-inset-bottom));display:flex;
+ background:rgba(28,29,34,.94);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+ border-radius:999px;padding:7px;z-index:10;box-shadow:0 10px 34px rgba(0,0,0,.45)}
+nav button{flex:1;background:none;border:0;color:#8f8c83;font-size:13px;font-weight:700;
+ padding:13px 4px;border-radius:999px;cursor:pointer;font-family:inherit}
+nav button.on{color:#1A1607;background:#FFD54F}
+#onboard{padding:30px 22px;max-width:560px;margin:0 auto}
+#onboard h1{font-size:24px;color:#FFD54F;margin-bottom:12px;font-weight:700;letter-spacing:.3px}
+#onboard p{font-size:15px;line-height:1.65;color:#d8d5cb;margin-bottom:14px}
+#onboard button{background:#FFD54F;color:#1A1607;border:0;border-radius:999px;font-size:16px;font-weight:700;
+ padding:16px 20px;width:100%;margin:10px 0;cursor:pointer;font-family:inherit}
+#onboard button.sec{background:#26272d;color:#F2F0EA}
 #onboard button:disabled{opacity:.45}
-#onboard textarea{width:100%;height:110px;background:#0d1017;color:#8a93a6;border:1px solid rgba(255,255,255,.12);
- border-radius:12px;padding:12px;font-size:11px;font-family:monospace;word-break:break-all}
+#onboard textarea{width:100%;height:110px;background:#1A1B20;color:#8f8c83;border:0;
+ border-radius:20px;padding:14px;font-size:11px;font-family:monospace;word-break:break-all}
 .err-tec{display:none;margin-top:12px;font-size:11px;font-family:monospace;color:#ff9e99;
- background:rgba(255,80,80,.07);border:1px solid rgba(255,80,80,.3);border-radius:10px;
- padding:10px 12px;word-break:break-all;line-height:1.5}
-#ob-backup{display:none;margin-top:18px;background:#0d1017;border:1px solid rgba(255,167,38,.45);
- border-radius:14px;padding:14px}
-#ob-backup h2{font-size:13px;color:#FFA726;letter-spacing:1px;margin-bottom:8px}
-#ob-backup p{font-size:13px;color:#c6cddc;margin-bottom:10px;line-height:1.55}
-#ob-backup .lbl{font-size:10px;color:#8a93a6;letter-spacing:1.5px;margin:12px 0 6px}
+ background:rgba(255,80,80,.09);border-radius:16px;
+ padding:12px 14px;word-break:break-all;line-height:1.5}
+#ob-backup{display:none;margin-top:18px;background:#1A1B20;border-radius:24px;padding:18px}
+#ob-backup h2{font-size:13px;color:#FFB74D;letter-spacing:1px;margin-bottom:8px}
+#ob-backup p{font-size:13px;color:#d8d5cb;margin-bottom:10px;line-height:1.6}
+#ob-backup .lbl{font-size:10px;color:#8f8c83;letter-spacing:2px;margin:14px 0 8px}
 #ob-backup textarea{height:96px}
-#ob-restore{display:none;margin-top:20px;border-top:1px solid rgba(255,255,255,.08);padding-top:16px}
-#ob-restore .lbl{font-size:10px;color:#8a93a6;letter-spacing:1.5px;margin-bottom:8px}
+#ob-restore{display:none;margin-top:22px;padding-top:18px}
+#ob-restore .lbl{font-size:10px;color:#8f8c83;letter-spacing:2px;margin-bottom:10px}
 #ob-p2,#ob-p3{display:none}
 .ok{color:#4ade80;font-weight:700}
-#aviso{background:rgba(255,167,38,.1);border:1px solid rgba(255,167,38,.35);border-radius:12px;
- padding:12px 14px;font-size:14px;color:#FFA726;margin-bottom:14px;display:none}
-#error{display:none;text-align:center;color:#8a93a6;font-size:13px;padding:30px 10px}
+#aviso{background:rgba(255,167,38,.13);border-radius:20px;
+ padding:14px 16px;font-size:14px;color:#FFB74D;margin-bottom:16px;display:none;line-height:1.5}
+#error{display:none;text-align:center;color:#8f8c83;font-size:13px;padding:30px 10px}
 </style>
 </head>
 <body>
