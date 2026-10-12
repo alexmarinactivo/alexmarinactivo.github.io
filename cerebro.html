@@ -425,7 +425,7 @@ function navegar(nuevoPath,moverCamara=true){
   actualizarMigas();
   ocultarDetalle();
   if(moverCamara){
-    const c=CAMD[prof];
+    const c=CAMD[0]; // Nassar: al entrar, siempre lo más lejos; el zoom lo elige él
     tween={t:0,dur:1.15,fromP:camera.position.clone(),toP:new THREE.Vector3(...c.p),
       fromT:controls.target.clone(),toT:new THREE.Vector3(...c.t)};
     controls.autoRotate=false;
