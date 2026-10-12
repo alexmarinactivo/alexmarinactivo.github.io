@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Cómo trabaja Nassar</title>
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three.webgpu.js",
+    "three/webgpu": "./vendor/three.webgpu.js",
+    "three/tsl": "./vendor/three.tsl.js",
+    "three/addons/": "./vendor/addons/"
+  }
+}
+</script>
+<style>
+  html,body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#04060c;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,sans-serif;
+    -webkit-tap-highlight-color:transparent; }
+  #c { position:fixed; inset:0; display:block; touch-action:none; }
+  #vineta { position:fixed; inset:0; pointer-events:none; z-index:3;
+    background:radial-gradient(ellipse at 50% 42%, transparent 55%, rgba(1,2,8,.4) 100%); }
+  #titulo { position:fixed; top:16px; left:0; right:0; text-align:center; color:#fff;
+    pointer-events:none; z-index:5; }
+  #titulo h1 { margin:0; font-size:20px; letter-spacing:4px; font-weight:700; }
+  #titulo h1 .dorado { color:#FFD54F; }
+  #titulo p { margin:6px 0 0; font-size:11px; letter-spacing:3px; color:#8a93a6; font-weight:500; }
+  #fase { position:fixed; bottom:52px; left:0; right:0; text-align:center; z-index:5;
+    pointer-events:none; color:#FFD54F; font-size:13px; letter-spacing:2px;
+    transition:opacity .5s ease; text-transform:uppercase; }
+  #ayuda { position:fixed; bottom:16px; left:0; right:0; text-align:center; color:#5b6478;
+    font-size:12px; letter-spacing:1px; pointer-events:none; z-index:5; }
+  #intro { position:fixed; inset:0; background:#04060c; z-index:40; pointer-events:none;
+    transition:opacity 1.8s ease; }
+  #err3d { position:fixed; inset:0; display:none; align-items:center; justify-content:center;
+    color:#8a93a6; font-size:14px; text-align:center; padding:30px; z-index:20; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="vineta"></div>
+<div id="titulo"><h1>CÓMO <span class="dorado">TRABAJO</span></h1><p>EL ORGANISMO · POR DENTRO</p></div>
+<div id="fase">en reposo</div>
+<div id="ayuda">Arrastra para girar · Pellizca para acercar</div>
+<div id="intro"></div>
+<div id="err3d"><div>No se pudo iniciar el 3D en este navegador.<br>Prueba con Chrome o Safari actualizado.</div></div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/OrbitControls.js';
+import { pass, time, uniform, color, float, sin } from 'three/tsl';
+import { bloom } from 'three/addons/BloomNode.js';
+
+// ================= RENDERER / ESCENA =================
+const canvas = document.getElementById('c');
+const reducido = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let renderer;
+try {
+  renderer = new THREE.WebGPURenderer({ canvas, antialias:true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  await renderer.init();
+} catch(e) {
+  document.getElementById('err3d').style.display = 'flex';
+  throw e;
+}
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x04060c);
+scene.fog = new THREE.FogExp2(0x04060c, 0.006);
+const camera = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 0.1, 700);
+const camStart = new THREE.Vector3(0, 46, 132);
+const camEnd = new THREE.Vector3(0, 10, 66);
+camera.position.copy(reducido ? camEnd : camStart);
+camera.lookAt(0, 0, 0);
+
+// ================= HELPERS =================
+const easeInOutCubic = t => t<.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
+const clamp01 = t => Math.max(0, Math.min(1, t));
+function glowTex(){
+  const c=document.createElement('canvas'); c.width=c.height=128;
+  const x=c.getContext('2d');
+  const g=x.createRadialGradient(64,64,0,64,64,64);
+  g.addColorStop(0,'rgba(255,255,255,1)'); g.addColorStop(0.25,'rgba(255,255,255,.55)');
+  g.addColorStop(0.55,'rgba(255,255,255,.14)'); g.addColorStop(1,'rgba(255,255,255,0)');
+  x.fillStyle=g; x.fillRect(0,0,128,128);
+  return new THREE.CanvasTexture(c);
+}
+const GLOW = glowTex();
+function pulso(hex, base, amp, vel){
+  const m = new THREE.MeshBasicNodeMaterial();
+  const uB = uniform(base), uP = uniform(Math.random()*6.28);
+  m.colorNode = color(hex).mul(uB).mul(float(1).add(float(amp).mul(sin(time.mul(float(vel)).add(uP)))));
+  m.userData.uB = uB;
+  return m;
+}
+function etiqueta(texto, colr){
+  const fs=32, c=document.createElement('canvas');
+  let x=c.getContext('2d');
+  const font=`600 ${fs}px -apple-system,"SF Pro Display","Segoe UI",Roboto,sans-serif`;
+  x.font=font;
+  const tw=x.measureText(texto).width, pad=18;
+  c.width=Math.ceil(tw+pad*2); c.height=fs+24;
+  x=c.getContext('2d');
+  x.font=font; x.textBaseline='middle'; x.fillStyle=colr;
+  x.shadowColor='rgba(0,0,0,.9)'; x.shadowBlur=6;
+  x.fillText(texto,pad,c.height/2+1);
+  const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace;
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthWrite:false,fog:false}));
+  s.scale.set(c.width*0.042, c.height*0.042, 1);
+  return s;
+}
+
+// ================= NÚCLEO =================
+const coreMat = pulso('#FFD54F', 1.25, 0.16, 2.0);
+const nucleo = new THREE.Mesh(new THREE.SphereGeometry(3, 40, 40), coreMat);
+scene.add(nucleo);
+const coreHalo = new THREE.Sprite(new THREE.SpriteMaterial({map:GLOW,color:0xFFD54F,transparent:true,
+  opacity:0.4,depthWrite:false,fog:false,blending:THREE.AdditiveBlending}));
+coreHalo.scale.set(26,26,1);
+scene.add(coreHalo);
+
+// ================= FILTRO =================
+const filtro = new THREE.Mesh(new THREE.SphereGeometry(6.5, 48, 32),
+  new THREE.MeshBasicMaterial({color:0x9fd4ff,transparent:true,opacity:0.07,
+    side:THREE.DoubleSide,depthWrite:false,blending:THREE.AdditiveBlending,fog:false}));
+scene.add(filtro);
+
+// ================= MEMORIA: anillos de cristales =================
+const cristales=[];
+const paleta=[0x8fb8ff,0xb9a7ff,0x9fe8ff,0xd0b8ff];
+function anilloMemoria(n, radio, tiltX, tiltZ){
+  for(let i=0;i<n;i++){
+    const a=i/n*Math.PI*2;
+    const mat=new THREE.MeshBasicMaterial({color:paleta[i%paleta.length],transparent:true,opacity:0.85,fog:false});
+    const m=new THREE.Mesh(new THREE.OctahedronGeometry(0.55), mat);
+    const base=new THREE.Vector3(Math.cos(a)*radio, 0, Math.sin(a)*radio);
+    const g=new THREE.Group();
+    g.rotation.x=tiltX; g.rotation.z=tiltZ;
+    m.position.copy(base);
+    g.add(m); scene.add(g);
+    m.userData={base:base.clone(), grupo:g, fase:Math.random()*6.28, orig:mat.color.clone()};
+    cristales.push(m);
+  }
+}
+anilloMemoria(22, 12, 0.5, 0.1);
+anilloMemoria(16, 15.5, -0.35, 0.25);
+
+// ================= MANOS: satélites =================
+const SATS=[
+  {nombre:'Navegador', color:'#4DD0E1'},
+  {nombre:'Archivos', color:'#FFA726'},
+  {nombre:'Ayudantes', color:'#F06292'},
+  {nombre:'Red', color:'#66BB6A'},
+];
+const sats=[];
+SATS.forEach((s,i)=>{
+  const a=i/SATS.length*Math.PI*2 + 0.6;
+  const pos=new THREE.Vector3(Math.cos(a)*25, (i%2? 4 : -4), Math.sin(a)*25);
+  const m=new THREE.Mesh(new THREE.SphereGeometry(1.3, 24, 24), pulso(s.color, 1.15, 0.12, 1.6));
+  m.position.copy(pos); scene.add(m);
+  const halo=new THREE.Sprite(new THREE.SpriteMaterial({map:GLOW,color:s.color,transparent:true,
+    opacity:0.35,depthWrite:false,fog:false,blending:THREE.AdditiveBlending}));
+  halo.scale.set(11,11,1); halo.position.copy(pos); scene.add(halo);
+  const lab=etiqueta(s.nombre, '#dfe6f5');
+  lab.position.copy(pos).add(new THREE.Vector3(0, 3.4, 0)); scene.add(lab);
+  const lg=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), pos]);
+  const link=new THREE.Line(lg, new THREE.LineBasicMaterial({color:s.color,transparent:true,
+    opacity:0.08,blending:THREE.AdditiveBlending,depthWrite:false,fog:false}));
+  scene.add(link);
+  sats.push({def:s, pos, link, halo});
+});
+
+// ================= MUNDO: frontera exterior =================
+const mundo = new THREE.Mesh(new THREE.SphereGeometry(36, 40, 32),
+  new THREE.MeshBasicMaterial({color:0x8fb8ff,transparent:true,opacity:0.045,
+    side:THREE.BackSide,depthWrite:false,fog:false}));
+scene.add(mundo);
+
+// ================= POLVO AMBIENTE =================
+{
+  const n=120, p=new Float32Array(n*3);
+  for(let i=0;i<n;i++){
+    const r=10+Math.random()*24, th=Math.random()*Math.PI*2, ph=Math.acos(2*Math.random()-1);
+    p[i*3]=r*Math.sin(ph)*Math.cos(th); p[i*3+1]=r*Math.cos(ph)*0.6; p[i*3+2]=r*Math.sin(ph)*Math.sin(th);
+  }
+  const g=new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(p,3));
+  const polvo=new THREE.Points(g, new THREE.PointsMaterial({color:0x5a6a8a,size:0.5,transparent:true,
+    opacity:0.5,depthWrite:false,fog:false}));
+  scene.add(polvo);
+}
+
+// ================= PARTÍCULAS: flujo de entrada (dorado; algunas rebotan en rojo) =================
+const NI=70;
+const inPos=new Float32Array(NI*3), inCol=new Float32Array(NI*3);
+const inDat=[];
+function respawnIn(i, inicial){
+  const th=Math.random()*Math.PI*2, ph=Math.acos(2*Math.random()-1);
+  inDat[i]={th, ph, r: inicial? 8+Math.random()*28 : 36, v: 5+Math.random()*4,
+    rechazada: Math.random()<0.15};
+}
+for(let i=0;i<NI;i++) respawnIn(i, true);
+const inGeo=new THREE.BufferGeometry();
+inGeo.setAttribute('position', new THREE.BufferAttribute(inPos,3));
+inGeo.setAttribute('color', new THREE.BufferAttribute(inCol,3));
+const inPts=new THREE.Points(inGeo, new THREE.PointsMaterial({vertexColors:true,size:0.75,
+  transparent:true,opacity:0.9,depthWrite:false,blending:THREE.AdditiveBlending,fog:false}));
+inPts.frustumCulled=false; scene.add(inPts);
+
+// ================= PARTÍCULAS: remolino de pensamiento (azul) =================
+const NW=90;
+const wPos=new Float32Array(NW*3), wDat=[];
+for(let i=0;i<NW;i++) wDat.push({r:4.4+Math.random()*2.8, a:Math.random()*Math.PI*2,
+  v:(0.5+Math.random()*0.9)*(Math.random()<0.5?1:-1), y:(Math.random()-0.5)*3});
+const wGeo=new THREE.BufferGeometry();
+wGeo.setAttribute('position', new THREE.BufferAttribute(wPos,3));
+const wMat=new THREE.PointsMaterial({color:0x7fb8ff,size:0.65,transparent:true,
+  opacity:0.3,depthWrite:false,blending:THREE.AdditiveBlending,fog:false});
+const wPts=new THREE.Points(wGeo, wMat);
+wPts.frustumCulled=false; scene.add(wPts);
+
+// ================= PARTÍCULAS: salida hacia la mano activa (verde) =================
+const NO=50;
+const outPos=new Float32Array(NO*3), outT=new Float32Array(NO);
+for(let i=0;i<NO;i++) outT[i]=Math.random();
+const outGeo=new THREE.BufferGeometry();
+outGeo.setAttribute('position', new THREE.BufferAttribute(outPos,3));
+const outMat=new THREE.PointsMaterial({color:0x7dffa8,size:0.7,transparent:true,
+  opacity:0,depthWrite:false,blending:THREE.AdditiveBlending,fog:false});
+const outPts=new THREE.Points(outGeo, outMat);
+outPts.frustumCulled=false; scene.add(outPts);
+
+// ================= POSTPROCESADO =================
+const renderPipeline = new THREE.RenderPipeline(renderer);
+const scenePass = pass(scene, camera);
+const scenePassColor = scenePass.getTextureNode('output');
+const bloomPass = bloom(scenePassColor, 0.32, 0.5, 0.78);
+renderPipeline.outputNode = scenePassColor.add(bloomPass);
+
+// ================= CONTROLES =================
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0,0,0);
+controls.enableDamping=true; controls.dampingFactor=0.06;
+controls.enablePan=false;
+controls.autoRotate=!reducido; controls.autoRotateSpeed=0.5;
+controls.minDistance=30; controls.maxDistance=140;
+controls.enabled=false;
+controls.update();
+
+// ================= MÁQUINA DE ESTADOS =================
+const FASES=[
+  {id:'reposo',   dur:4,   label:'en reposo'},
+  {id:'recibir',  dur:3,   label:'recibiendo'},
+  {id:'pensar',   dur:4.5, label:'pensando'},
+  {id:'actuar',   dur:4,   label:'actuando'},
+  {id:'verificar',dur:2.2, label:'verificando'},
+  {id:'guardar',  dur:3,   label:'guardando en memoria'},
+];
+const TARGETS={
+  reposo:   {in:0.15, swirl:0.15, out:0,   core:1.0},
+  recibir:  {in:1,    swirl:0.25, out:0,   core:1.15},
+  pensar:   {in:0.2,  swirl:1,    out:0,   core:1.35},
+  actuar:   {in:0.15, swirl:0.3,  out:1,   core:1.2},
+  verificar:{in:0.1,  swirl:0.2,  out:0.1, core:1.5},
+  guardar:  {in:0.15, swirl:0.45, out:0,   core:1.1},
+};
+const V={in:0.15, swirl:0.15, out:0, core:1.0};
+let faseIdx=0, faseT=0, satActiva=0, recall=null;
+const faseEl=document.getElementById('fase');
+function setFase(i){
+  faseIdx=i; faseT=0;
+  const f=FASES[i];
+  faseEl.style.opacity=0;
+  setTimeout(()=>{ faseEl.textContent=f.label; faseEl.style.opacity=1; }, 250);
+  if(f.id==='actuar') satActiva=(Math.random()*sats.length)|0;
+  if(f.id==='verificar') coreHalo.material.color.set(0x7dffa8);
+  else coreHalo.material.color.set(0xFFD54F);
+  if(f.id==='guardar'){
+    const c=cristales[(Math.random()*cristales.length)|0];
+    recall={c, t:0};
+  }
+}
+
+// ================= BUCLE =================
+function resize(){ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); }
+addEventListener('resize',resize); resize();
+const clock=new THREE.Clock();
+let introT = reducido ? 1 : 0, primerFrame=true;
+const tmpV=new THREE.Vector3();
+
+renderer.setAnimationLoop(()=>{
+  const dt=Math.min(clock.getDelta(), 0.05);
+  const t=clock.elapsedTime;
+  if(introT<1){
+    introT=Math.min(1, introT+dt/3);
+    const k=easeInOutCubic(introT);
+    camera.position.lerpVectors(camStart, camEnd, k);
+    camera.lookAt(0,0,0);
+    if(introT>=1) controls.enabled=true;
+  }
+  controls.update();
+
+  // --- fases ---
+  faseT+=dt;
+  if(faseT>=FASES[faseIdx].dur) setFase((faseIdx+1)%FASES.length);
+  const TG=TARGETS[FASES[faseIdx].id];
+  const kk=1-Math.exp(-3*dt);
+  V.in+=(TG.in-V.in)*kk; V.swirl+=(TG.swirl-V.swirl)*kk;
+  V.out+=(TG.out-V.out)*kk; V.core+=(TG.core-V.core)*kk;
+  coreMat.userData.uB.value=1.25*V.core;
+  coreHalo.material.opacity=0.3+0.15*V.core;
+
+  // --- entrada dorada (algunas rebotan en rojo = filtro) ---
+  for(let i=0;i<NI;i++){
+    const d=inDat[i];
+    if(d.rechazada && d.r<=7){
+      d.r+=d.v*2.2*dt; // rebota hacia fuera
+      inCol[i*3]=1; inCol[i*3+0+1]=0.25; inCol[i*3+2]=0.25;
+    } else {
+      d.r-=d.v*dt*(0.3+0.7*V.in);
+      if(d.rechazada){ inCol[i*3]=1; inCol[i*3+1]=0.75; inCol[i*3+2]=0.3; }
+      else { inCol[i*3]=1; inCol[i*3+1]=0.84; inCol[i*3+2]=0.35; }
+    }
+    if(d.r<3.4 || d.r>38) respawnIn(i,false);
+    const sp=Math.sin(d.ph);
+    inPos[i*3]=d.r*sp*Math.cos(d.th);
+    inPos[i*3+1]=d.r*Math.cos(d.ph)*0.7;
+    inPos[i*3+2]=d.r*sp*Math.sin(d.th);
+  }
+  inGeo.attributes.position.needsUpdate=true;
+  inGeo.attributes.color.needsUpdate=true;
+  inPts.material.opacity=0.25+0.65*V.in;
+
+  // --- remolino azul ---
+  for(let i=0;i<NW;i++){
+    const d=wDat[i];
+    d.a+=d.v*dt*(0.4+1.4*V.swirl);
+    wPos[i*3]=Math.cos(d.a)*d.r; wPos[i*3+1]=d.y+Math.sin(t*1.3+d.a)*0.5; wPos[i*3+2]=Math.sin(d.a)*d.r;
+  }
+  wGeo.attributes.position.needsUpdate=true;
+  wMat.opacity=0.12+0.7*V.swirl;
+
+  // --- salida verde hacia la mano activa ---
+  const sat=sats[satActiva];
+  for(let i=0;i<NO;i++){
+    outT[i]+=dt*0.5;
+    if(outT[i]>1) outT[i]=0;
+    const k=outT[i];
+    outPos[i*3]=sat.pos.x*k; outPos[i*3+1]=sat.pos.y*k; outPos[i*3+2]=sat.pos.z*k;
+  }
+  outGeo.attributes.position.needsUpdate=true;
+  outMat.opacity=0.9*V.out;
+  sats.forEach((s2,i)=>{
+    s2.link.material.opacity = (i===satActiva) ? 0.1+0.7*V.out : 0.07;
+  });
+
+  // --- cristales: flotación + recuerdo (uno vuela al núcleo y vuelve) ---
+  for(const c of cristales){
+    const u=c.userData;
+    tmpV.copy(u.base); tmpV.y+=Math.sin(t*0.9+u.fase)*0.35;
+    c.position.copy(tmpV);
+    c.rotation.y+=dt*0.4; c.rotation.x+=dt*0.15;
+  }
+  if(recall){
+    recall.t+=dt/2.2;
+    const c=recall.c, u=c.userData, k=Math.sin(Math.min(1,recall.t)*Math.PI);
+    c.position.lerpVectors(tmpV.copy(u.base), new THREE.Vector3(0,0,0), k);
+    c.material.color.copy(u.orig).lerp(new THREE.Color(0xFFD54F), k);
+    c.scale.setScalar(1+k*1.6);
+    if(recall.t>=1){ c.material.color.copy(u.orig); c.scale.setScalar(1); recall=null; }
+  }
+
+  filtro.rotation.y+=dt*0.05;
+  mundo.rotation.y-=dt*0.004;
+
+  renderPipeline.render();
+  if(primerFrame){ primerFrame=false;
+    setTimeout(()=>{ document.getElementById('intro').style.opacity='0'; }, 350); }
+});
+</script>
+</body>
+</html>
