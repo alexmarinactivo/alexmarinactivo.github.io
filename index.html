@@ -47,8 +47,8 @@ main{flex:1;overflow-y:auto;padding:8px 16px 120px;-webkit-overflow-scrolling:to
 #ultimo li{list-style:none;font-size:14px;color:#d8d5cb;padding:8px 0 8px 28px;position:relative;line-height:1.45}
 #ultimo li:before{content:"✓";position:absolute;left:4px;color:#4ade80;font-weight:700}
 #refresco{text-align:center;color:#6f6c63;font-size:12px;margin-top:8px}
-#vista-cerebro,#vista-organismo{height:100%}
-#vista-cerebro iframe,#vista-organismo iframe{width:100%;height:100%;border:0;border-radius:28px;background:#151619}
+#vista-cerebro,#vista-organismo,#vista-avion{height:100%}
+#vista-cerebro iframe,#vista-organismo iframe,#vista-avion iframe{width:100%;height:100%;border:0;border-radius:28px;background:#151619}
 nav{position:fixed;left:16px;right:16px;bottom:calc(14px + env(safe-area-inset-bottom));display:flex;
  background:rgba(28,29,34,.94);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
  border-radius:999px;padding:7px;z-index:10;box-shadow:0 10px 34px rgba(0,0,0,.45)}
@@ -134,11 +134,13 @@ nav button.on{color:#1A1607;background:#FFD54F}
   </div>
   <div id="vista-cerebro" class="vista"><iframe id="f-cerebro" src="cerebro.html" title="Cerebro 3D"></iframe></div>
   <div id="vista-organismo" class="vista"><iframe id="f-organismo" src="organismo.html" title="Cómo trabajo"></iframe></div>
+ <div id="vista-avion" class="vista"><iframe id="f-avion" src="avion.html" title="Vista avión"></iframe></div>
  </main>
  <nav>
   <button id="b-vivo" class="on">◉ En vivo</button>
   <button id="b-cerebro">✦ Cerebro 3D</button>
   <button id="b-organismo">◈ Cómo trabajo</button>
+  <button id="b-avion">✈ Vista avión</button>
  </nav>
  </div>
 </div>
@@ -149,17 +151,16 @@ const $=id=>document.getElementById(id);
 const NOMBRE={en_curso:'EN CURSO',pendiente:'PENDIENTE',activo:'ACTIVO',hecho:'HECHO'};
 let ultimaOk=null, yaDentro=false;
 
-function ir(v){ // 'vivo' | 'cerebro' | 'organismo'
- $('b-vivo').classList.toggle('on',v==='vivo');
- $('b-cerebro').classList.toggle('on',v==='cerebro');
- $('b-organismo').classList.toggle('on',v==='organismo');
- $('vista-vivo').classList.toggle('on',v==='vivo');
- $('vista-cerebro').classList.toggle('on',v==='cerebro');
- $('vista-organismo').classList.toggle('on',v==='organismo');
+function ir(v){ // 'vivo' | 'cerebro' | 'organismo' | 'avion'
+ ['vivo','cerebro','organismo','avion'].forEach(function(k){
+  $('b-'+k).classList.toggle('on',v===k);
+  $('vista-'+k).classList.toggle('on',v===k);
+ });
  if(v!=='vivo'){ const fr=$('f-'+v);
    if(fr){ try{ fr.contentWindow.dispatchEvent(new Event('resize')); }catch(e){} } }}
 $('b-vivo').onclick=()=>ir('vivo'); $('b-cerebro').onclick=()=>ir('cerebro');
 $('b-organismo').onclick=()=>ir('organismo');
+$('b-avion').onclick=()=>ir('avion');
 
 /* panel -> cerebro: tocar misión enfoca su nodo */
 $('misiones').addEventListener('click',e=>{
