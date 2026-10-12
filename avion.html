@@ -1,19 +1,10 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#101014">
 <title>Vista avión — Nassar·OS</title>
-<script type="importmap">
-{
-  "imports": {
-    "three": "./vendor/three.webgpu.js",
-    "three/webgpu": "./vendor/three.webgpu.js",
-    "three/tsl": "./vendor/three.tsl.js",
-    "three/addons/": "./vendor/addons/"
-  }
-}
-</script>
 <style>
 @font-face{font-family:'Inter';src:url('vendor/fonts/inter-400.woff2') format('woff2');font-weight:400;font-display:swap}
 @font-face{font-family:'Inter';src:url('vendor/fonts/inter-600.woff2') format('woff2');font-weight:600;font-display:swap}
@@ -21,67 +12,67 @@
 @font-face{font-family:'Instrument Serif';src:url('vendor/fonts/instrument-serif-400.woff2') format('woff2');font-weight:400;font-display:swap}
 @font-face{font-family:'Kode Mono';src:url('vendor/fonts/kode-mono-400.woff2') format('woff2');font-weight:400;font-display:swap}
 @font-face{font-family:'Kode Mono';src:url('vendor/fonts/kode-mono-600.woff2') format('woff2');font-weight:600;font-display:swap}
-*{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;overflow:hidden;
- background:radial-gradient(120% 90% at 50% 30%, #2A2B30 45%, #151619 100%);
- color:#ECEAE3;font-family:'Inter',-apple-system,"Segoe UI",Roboto,sans-serif;
- -webkit-tap-highlight-color:transparent}
-#c{position:fixed;inset:0;display:block;touch-action:none}
-#vineta{position:fixed;inset:0;pointer-events:none;z-index:3;
- background:radial-gradient(ellipse at 50% 42%,transparent 55%,rgba(5,6,8,.36) 82%,rgba(3,4,6,.62) 100%)}
-.hud{position:fixed;z-index:10;pointer-events:none}
-#topbar{top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;
- padding:14px 18px;animation:aparicion 1.2s ease .2s both}
-#marca{font-family:'Kode Mono',monospace;font-weight:600;font-size:15px;letter-spacing:2px;color:#ECEAE3}
-#marca b{color:#FFD54F;font-weight:600}
-#live{display:flex;align-items:center;gap:10px;font-family:'Kode Mono',monospace;font-size:12px;color:#A3A098}
-#pildora{display:flex;align-items:center;gap:7px;border:1px solid rgba(236,234,227,.14);
- background:rgba(27,28,33,.85);border-radius:20px;padding:6px 13px;color:#ECEAE3;letter-spacing:1.5px;font-size:11px}
-#pildora .punto{width:8px;height:8px;border-radius:50%;background:#4ade80;animation:pulso 1.8s infinite}
-@keyframes pulso{0%{box-shadow:0 0 0 0 rgba(74,222,128,.55)}70%{box-shadow:0 0 0 8px rgba(74,222,128,0)}100%{box-shadow:0 0 0 0 rgba(74,222,128,0)}}
-#caption{top:64px;left:0;right:0;text-align:center;font-family:'Kode Mono',monospace;font-size:12px;
- letter-spacing:3px;color:#A3A098;animation:aparicion 1.2s ease .4s both}
-.card{background:rgba(27,28,33,.9);border:1px solid rgba(236,234,227,.14);border-radius:14px;
- padding:14px 16px;backdrop-filter:blur(10px);box-shadow:0 10px 40px rgba(0,0,0,.45);pointer-events:auto}
-#detalle{left:50%;transform:translateX(-50%);bottom:18px;width:min(480px,calc(100% - 28px));display:none;z-index:11;position:fixed}
-#detalle.vis{display:block;animation:subir .45s cubic-bezier(.2,.8,.2,1)}
-@keyframes subir{from{opacity:0;transform:translate(-50%,16px)}to{opacity:1;transform:translate(-50%,0)}}
-#d-nombre{font-family:'Instrument Serif',serif;font-size:26px;color:#ECEAE3;margin-bottom:6px}
-#d-nombre .dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:10px}
-#d-desc{font-size:14px;color:#c9c5b9;line-height:1.6;margin-bottom:10px}
-#d-meta{font-family:'Kode Mono',monospace;font-size:11px;letter-spacing:1.5px;color:#A3A098}
-#d-cerrar{position:absolute;top:10px;right:14px;color:#A3A098;font-size:20px;cursor:pointer;padding:4px;pointer-events:auto}
-#ayuda{bottom:18px;left:0;right:0;text-align:center;color:#6f6c63;font-size:11.5px;letter-spacing:1.5px;
- font-family:'Kode Mono',monospace;animation:aparicion 1.2s ease 1.2s both}
-#intro{position:fixed;inset:0;background:#151619;z-index:40;pointer-events:none;transition:opacity 1.6s ease}
-#err3d{position:fixed;inset:0;display:none;align-items:center;justify-content:center;color:#A3A098;
- font-size:14px;text-align:center;padding:30px;z-index:20}
-@keyframes aparicion{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+html,body{height:100%;margin:0;overflow:hidden;background:radial-gradient(120% 90% at 50% 30%, #2A2B30 45%, #151619 100%);font-family:Inter,system-ui,sans-serif;color:#ECEAE3;-webkit-user-select:none;user-select:none}
+#c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#vig{position:fixed;inset:0;pointer-events:none;background:radial-gradient(115% 100% at 50% 42%, transparent 58%, rgba(0,0,0,.42) 100%)}
+.hud{position:fixed;z-index:5;pointer-events:none;font-family:'Kode Mono',monospace}
+#marca{top:calc(10px + env(safe-area-inset-top));left:14px;font-size:11px;letter-spacing:2.5px;color:#FFD54F;font-weight:600}
+#envivo{top:calc(10px + env(safe-area-inset-top));right:14px;font-size:11px;letter-spacing:2px;color:#8FE388;text-align:right}
+#reloj{font-size:15px;color:#ECEAE3;margin-top:3px;letter-spacing:1px}
+#ayuda{bottom:calc(12px + env(safe-area-inset-bottom));left:0;right:0;text-align:center;font-size:10.5px;letter-spacing:1.2px;color:rgba(236,234,227,.55)}
+#migas{position:fixed;z-index:6;top:calc(44px + env(safe-area-inset-top));left:14px;display:flex;gap:6px;align-items:center;font-family:'Kode Mono',monospace;font-size:11px}
+.miga{padding:6px 12px;border-radius:999px;background:rgba(20,21,26,.72);border:1px solid rgba(236,234,227,.14);color:#ECEAE3}
+.miga:last-child{border-color:rgba(255,213,79,.5);color:#FFD54F}
+#atras{position:fixed;z-index:6;top:calc(40px + env(safe-area-inset-top));right:14px;width:44px;height:44px;border-radius:50%;border:1px solid rgba(236,234,227,.2);background:rgba(20,21,26,.72);color:#ECEAE3;font-size:20px;display:none;align-items:center;justify-content:center}
+#detalle{position:fixed;z-index:7;left:14px;right:14px;bottom:calc(44px + env(safe-area-inset-bottom));background:rgba(18,19,24,.92);border:1px solid rgba(236,234,227,.14);border-radius:20px;padding:16px 16px 14px;transform:translateY(16px);opacity:0;pointer-events:none;transition:all .3s ease;backdrop-filter:blur(8px)}
+#detalle.vis{transform:none;opacity:1;pointer-events:auto}
+#d-nombre{font-family:'Instrument Serif',serif;font-size:24px;margin-bottom:6px;display:flex;align-items:center;gap:10px}
+#d-nombre .dot{width:14px;height:14px;border-radius:50%;flex:none}
+#d-desc{font-size:14px;line-height:1.5;color:rgba(236,234,227,.85);margin-bottom:8px}
+#d-meta{font-family:'Kode Mono',monospace;font-size:10.5px;letter-spacing:1.5px;color:rgba(236,234,227,.5)}
+#d-cerrar{position:absolute;top:8px;right:12px;background:none;border:0;color:rgba(236,234,227,.5);font-size:20px;padding:8px}
+#intro{position:fixed;inset:0;background:#151619;z-index:20;display:flex;flex-direction:column;gap:14px;align-items:center;justify-content:center;transition:opacity 1.4s ease}
+#intro .t{font-family:'Instrument Serif',serif;font-size:34px;color:#FFD54F}
+#intro .s{font-family:'Kode Mono',monospace;font-size:11px;letter-spacing:3px;color:rgba(236,234,227,.5)}
+#err3d{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;background:rgba(10,10,12,.9);font-size:14px;text-align:center;padding:30px;line-height:1.6}
 </style>
+<script type="importmap">
+{"imports":{"three":"./vendor/classic/three.module.js","three/addons/":"./vendor/addons-classic/"}}
+</script>
 </head>
 <body>
 <canvas id="c"></canvas>
-<div id="vineta"></div>
-<div class="hud" id="topbar"><div id="marca">NASSAR<b>·OS</b></div>
- <div id="live"><span id="reloj">--:--</span><span id="pildora"><span class="punto"></span>EN VIVO</span></div></div>
-<div class="hud" id="caption">✈ vista avión · todo el mapa interconectado</div>
-<div class="hud card" id="detalle"><span id="d-cerrar">×</span><div id="d-nombre"></div><p id="d-desc"></p><div id="d-meta"></div></div>
-<div class="hud" id="ayuda">arrastra para girar · pellizca para acercar · toca un nodo para verlo</div>
-<div id="intro"></div>
-<div id="err3d"><div>No se pudo iniciar el 3D en este navegador.<br>Prueba con Chrome o Safari actualizado.</div></div>
+<div id="vig"></div>
+<div class="hud" id="marca">NASSAR·OS</div>
+<div class="hud" id="envivo">EN VIVO<div id="reloj">--:--</div></div>
+
+<div class="hud" id="ayuda">todo el mapa desplegado · arrastra para girar · pellizca para acercar</div>
+<div id="migas"></div>
+<button id="atras" aria-label="Atrás">‹</button>
+<div id="detalle"><button id="d-cerrar">×</button><div id="d-nombre"></div><div id="d-desc"></div><div id="d-meta"></div></div>
+<div id="intro"><div class="t">Vista avión</div><div class="s">NASSAR·OS · EN VIVO</div></div>
+<div id="err3d"></div>
 <script>
-window.__nassarQ=[];
-addEventListener('message',function(e){
-  if(e.origin!==location.origin) return;
-  if(e.data&&e.data.type&&e.data.type.indexOf('nassar-')===0) window.__nassarQ.push(e.data);
-});
+function tickReloj(){var f=new Date();document.getElementById('reloj').textContent=String(f.getHours()).padStart(2,'0')+':'+String(f.getMinutes()).padStart(2,'0');}
+tickReloj();setInterval(tickReloj,15000);
 </script>
 <script type="module">
 import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/OrbitControls.js';
-import { pass, time, uniform, color, float, sin } from 'three/tsl';
-import { bloom } from 'three/addons/BloomNode.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
+/* ===== errores visibles con reintento ===== */
+const errEl=document.getElementById('err3d');
+let __ok=false;
+function fallo(){
+  if(__ok) return; __ok='f';
+  errEl.style.display='flex';
+  errEl.innerHTML='<div>El 3D no arrancó aquí.<br><br><button id="btn-re" style="padding:12px 28px;border-radius:999px;border:0;background:#FFD54F;color:#111;font-weight:700;font-size:15px">Reintentar</button></div>';
+  document.getElementById('btn-re').onclick=()=>location.reload();
+}
+addEventListener('error',()=>fallo());
+addEventListener('unhandledrejection',()=>fallo());
+
+/* ===== datos ===== */
 const NODOS = {
 "cerebro":{nombre:"CEREBRO",label:"nassar",color:"#FFD54F",desc:"Nassar Intelligence: tu agente personal. Orquesto las 5 secciones; tú solo decides lo imprescindible.",hijos:["Misiones de dinero","Cerebros IA","Radar y caza","Vida y trámites","Capacidades"]},
 "Misiones de dinero":{label:"dinero",color:"#66BB6A",desc:"De aquí saldrán tus ganancias.",hijos:["Producto nuevo","Crypto","Forex demo","Vinted"]},
@@ -179,55 +170,45 @@ const NODOS = {
 "Spotify":{color:"#7986CB",desc:"Música desde el chat.",hijos:[]}
 };
 for(const id in NODOS){ const n=NODOS[id]; if(!n.nombre) n.nombre=id; if(!n.label) n.label=n.nombre.toLowerCase(); }
-const PADRE={};
-for(const id in NODOS) for(const h of NODOS[id].hijos) PADRE[h]=id;
 
-const PROF={};
-for(const id of Object.keys(NODOS)) PROF[id]= id==='cerebro'?0:PROF[PADRE[id]]+1;
-
-// ================= RENDERER / ESCENA =================
-const canvas=document.getElementById('c');
-const reducido=matchMedia('(prefers-reduced-motion: reduce)').matches;
+/* ===== renderer WebGL2 clásico (síncrono, sin negociación de GPU) ===== */
 let renderer;
 try{
-  renderer=new THREE.WebGPURenderer({canvas,antialias:true});
-  renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
-  renderer.toneMapping=THREE.ACESFilmicToneMapping;
-  await Promise.race([renderer.init(), new Promise((_,rej)=>setTimeout(()=>rej(new Error('gpu-timeout')),9000))]);
-}catch(e){
-  var d=document.getElementById('err3d');
-  d.style.display='flex';
-  d.innerHTML='<div>El 3D no arrancó aquí.<br><br><button id="btn-reintentar" style="padding:12px 28px;border-radius:999px;border:0;background:#FFD54F;color:#111;font-weight:700;font-size:15px">Reintentar</button></div>';
-  document.getElementById('btn-reintentar').onclick=function(){ location.reload(); };
-  throw e; }
-try{ await Promise.race([document.fonts.load('600 30px "Kode Mono"'), new Promise(r=>setTimeout(r,2500))]); }catch(e){}
+  renderer=new THREE.WebGLRenderer({canvas:document.getElementById('c'),antialias:true,powerPreference:'high-performance'});
+  if(!renderer.getContext()) throw new Error('sin-contexto-webgl');
+}catch(e){ fallo(); throw e; }
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
+renderer.setSize(innerWidth,innerHeight);
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
 
+/* ===== escena ===== */
 const scene=new THREE.Scene();
 (function fondo(){
   const c=document.createElement('canvas'); c.width=c.height=512;
   const x=c.getContext('2d');
-    const g=x.createRadialGradient(256,150,40,256,256,380);
+  const g=x.createRadialGradient(256,150,40,256,256,360);
   g.addColorStop(0,'#2E2F34'); g.addColorStop(0.45,'#222326'); g.addColorStop(1,'#141518');
   x.fillStyle=g; x.fillRect(0,0,512,512);
   const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace;
   scene.background=t;
 })();
 scene.fog=new THREE.FogExp2(0x17181c,0.0022);
-const camera=new THREE.PerspectiveCamera(50,innerWidth/innerHeight,0.1,1200);
+const camera=new THREE.PerspectiveCamera(50,innerWidth/innerHeight,0.1,1500);
 camera.position.set(0,150,330); camera.lookAt(0,0,0);
 
-const easeInOutCubic=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
-const easeOutBack=t=>{const c=1.70158,c3=c+1;return 1+c3*Math.pow(t-1,3)+c*Math.pow(t-1,2);};
+/* ===== utilidades ===== */
 const clamp01=t=>Math.max(0,Math.min(1,t));
+const easeOutBack=t=>{const c=1.70158,c3=c+1;return 1+c3*Math.pow(t-1,3)+c*Math.pow(t-1,2);};
+const easeInOutCubic=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
 function hexRgb(h){const n=parseInt(h.slice(1),16);return[((n>>16)&255)/255,((n>>8)&255)/255,(n&255)/255];}
 function glowTex(){const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d');
- const g=x.createRadialGradient(64,64,0,64,64,64);
- g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(0.25,'rgba(255,255,255,.5)');
- g.addColorStop(0.6,'rgba(255,255,255,.12)');g.addColorStop(1,'rgba(255,255,255,0)');
- x.fillStyle=g;x.fillRect(0,0,128,128);return new THREE.CanvasTexture(c);}
+  const g=x.createRadialGradient(64,64,0,64,64,64);
+  g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(0.25,'rgba(255,255,255,.5)');
+  g.addColorStop(0.6,'rgba(255,255,255,.12)');g.addColorStop(1,'rgba(255,255,255,0)');
+  x.fillStyle=g;x.fillRect(0,0,128,128);return new THREE.CanvasTexture(c);}
 const GLOW=glowTex();
-
-function etiquetaMono(texto,fs){
+function etiqueta(texto,fs){
   const c=document.createElement('canvas');
   let x=c.getContext('2d');
   x.font='600 '+fs+'px "Kode Mono",monospace';
@@ -235,10 +216,10 @@ function etiquetaMono(texto,fs){
   const tw=x.measureText(texto).width,pad=13;
   c.width=Math.ceil(tw+pad*2);c.height=fs+20;
   x=c.getContext('2d');
-  const r=c.height/2;
   x.fillStyle='rgba(11,12,16,0.78)';
   x.strokeStyle='rgba(236,234,227,0.16)';x.lineWidth=2;
   x.beginPath();
+  const r=c.height/2;
   if(x.roundRect) x.roundRect(2,2,c.width-4,c.height-4,r-2); else x.rect(2,2,c.width-4,c.height-4);
   x.fill();x.stroke();
   x.font='600 '+fs+'px "Kode Mono",monospace';
@@ -252,104 +233,96 @@ function etiquetaMono(texto,fs){
   s.scale.set(c.width*k,c.height*k,1);s.renderOrder=5;
   return s;
 }
-function materialNodo(hex){
-  const mat=new THREE.MeshBasicNodeMaterial();
-  const uAmp=uniform(0.06),uBright=uniform(1.0),uPhase=uniform(Math.random()*6.28);
-  mat.colorNode=color(hex).mul(uBright).mul(
-    float(1).sub(uAmp).add(uAmp.mul(float(0.5).add(float(0.5).mul(sin(time.mul(float(1.4)).add(uPhase)))))));
-  mat.userData={uAmp,uBright};
-  return mat;
+function nodo3d(hex,radio,esCentro){
+  const base=new THREE.Color(hex);
+  const mat=new THREE.MeshBasicMaterial({color:base.clone().multiplyScalar(esCentro?1.0:0.92)});
+  const m=new THREE.Mesh(new THREE.SphereGeometry(1,20,20),mat);
+  m.scale.setScalar(radio);
+  const halo=new THREE.Sprite(new THREE.SpriteMaterial({map:GLOW,color:hex,transparent:true,
+    opacity:0.24,depthWrite:false,fog:false,blending:THREE.AdditiveBlending}));
+  const hs=radio*(esCentro?9:8);
+  halo.scale.set(hs,hs,1); halo.renderOrder=4;
+  return {m,mat,halo,base,hs};
 }
 
-// ================= LAYOUT FRACTAL (todo desplegado) =================
+/* ================= MOTOR: vista avión (todo desplegado) ================= */
+const PADRE={};
+for(const id in NODOS) for(const h of NODOS[id].hijos) PADRE[h]=id;
+const PROF={};
+for(const id of Object.keys(NODOS)) PROF[id]=id==='cerebro'?0:PROF[PADRE[id]]+1;
 const POSA={};
 POSA['cerebro']=new THREE.Vector3(0,0,0);
-const secs=NODOS['cerebro'].hijos;
-secs.forEach((s,i)=>{ const a=(i/secs.length)*Math.PI*2-Math.PI/2;
+NODOS['cerebro'].hijos.forEach((s,i)=>{ const a=(i/NODOS['cerebro'].hijos.length)*Math.PI*2-Math.PI/2;
   POSA[s]=new THREE.Vector3(Math.cos(a)*34,0,Math.sin(a)*34); });
 const RADIO_NIVEL={2:11.5,3:5.8};
 for(const id of Object.keys(NODOS)){
   const p=PROF[id];
-  if(p>=2){ const par=PADRE[id],sib=NODOS[par].hijos,j=sib.indexOf(id);
+  if(p>=2){ const par=PADRE[id], sib=NODOS[par].hijos, j=sib.indexOf(id);
     const rr=RADIO_NIVEL[p]||3.4;
     const a=(j/sib.length)*Math.PI*2+p*0.5;
     POSA[id]=POSA[par].clone().add(new THREE.Vector3(Math.cos(a)*rr,0,Math.sin(a)*rr)); }
 }
 const RAD=[3.4,2.0,1.05,0.72,0.55];
 
-// ================= NODOS =================
 const mallas={}, orden=Object.keys(NODOS);
 for(const id of orden){
-  const n=NODOS[id],prof=PROF[id],r=RAD[Math.min(prof,4)];
-  const mat=materialNodo(n.color);
-  const m=new THREE.Mesh(new THREE.SphereGeometry(1,20,20),mat);
-  m.scale.setScalar(r);
+  const n=NODOS[id], prof=PROF[id], esC=id==='cerebro', r=RAD[Math.min(prof,4)];
+  const nd=nodo3d(n.color,r,esC);
+  const m=nd.m;
   m.position.copy(POSA[id]||new THREE.Vector3());
-  const halo=new THREE.Sprite(new THREE.SpriteMaterial({map:GLOW,color:n.color,transparent:true,
-    opacity:0.24,depthWrite:false,fog:false,blending:THREE.AdditiveBlending}));
-  const hs=r*8;
-  halo.scale.set(hs,hs,1); halo.position.copy(m.position); halo.renderOrder=4;
-  scene.add(halo);
-  const lab=etiquetaMono(n.label, prof===0?34:26);
-  lab.position.set(m.position.x, m.position.y+r+1.8, m.position.z);
+  const lab=etiqueta(n.label,esC?34:26);
+  lab.position.set(m.position.x,m.position.y+r+1.8,m.position.z);
   lab.material.opacity=0;
   scene.add(lab);
-  const u={id,nombre:n.nombre,color:n.color,halo,etiqueta:lab,
-    uAmp:mat.userData.uAmp,uBright:mat.userData.uBright,
-    state:'normal',r,fase:Math.random()*6.28,delay:Math.random()*1.2};
-  if(id==='cerebro') u.uBright.value=1.35;
-  m.userData=u;
-  scene.add(m); mallas[id]=m;
+  nd.halo.position.copy(m.position);
+  scene.add(nd.halo);
+  const u={id,nombre:n.nombre,mat:nd.mat,base:nd.base,halo:nd.halo,etiqueta:lab,r,
+    fase:Math.random()*6.28,hop:0.22,delay:Math.random()*1.2};
+  m.userData=u; scene.add(m); mallas[id]=m;
 }
-
-// ================= ARISTAS + PARTÍCULAS =================
+/* aristas */
 const aristas=[];
-for(const id of orden) if(id!=='cerebro') aristas.push({a:PADRE[id],b:id});
+for(const id of orden) if(id!=='cerebro') aristas.push([PADRE[id],id]);
 {
-  const lp=new Float32Array(aristas.length*6),lc=new Float32Array(aristas.length*6);
+  const lp=new Float32Array(aristas.length*6), lc=new Float32Array(aristas.length*6);
   aristas.forEach((e,i)=>{
-    const pa=POSA[e.a],pb=POSA[e.b],col=hexRgb(NODOS[e.b].color);
-    lp[i*6]=pa.x;lp[i*6+1]=pa.y;lp[i*6+2]=pa.z;
-    lp[i*6+3]=pb.x;lp[i*6+4]=pb.y;lp[i*6+5]=pb.z;
-    for(let k=0;k<2;k++){ lc[i*6+k*3]=col[0]*0.5;lc[i*6+k*3+1]=col[1]*0.5;lc[i*6+k*3+2]=col[2]*0.5; }
+    const pa=POSA[e[0]]||new THREE.Vector3(), pb=POSA[e[1]]||new THREE.Vector3(), c=hexRgb(NODOS[e[1]].color);
+    lp[i*6]=pa.x;lp[i*6+1]=pa.y;lp[i*6+2]=pa.z;lp[i*6+3]=pb.x;lp[i*6+4]=pb.y;lp[i*6+5]=pb.z;
+    for(let k=0;k<2;k++){ lc[i*6+k*3]=c[0]*0.4;lc[i*6+k*3+1]=c[1]*0.4;lc[i*6+k*3+2]=c[2]*0.4; }
   });
   const g=new THREE.BufferGeometry();
   g.setAttribute('position',new THREE.BufferAttribute(lp,3));
   g.setAttribute('color',new THREE.BufferAttribute(lc,3));
   const lineas=new THREE.LineSegments(g,new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:0.25}));
-  lineas.frustumCulled=false;
-  scene.add(lineas);
+  lineas.frustumCulled=false; scene.add(lineas);
 }
+/* partículas */
 const NP=80;
-const pPos=new Float32Array(NP*3),pT=new Float32Array(NP),pEdge=new Uint16Array(NP);
+const pPos=new Float32Array(NP*3), pT=new Float32Array(NP), pEdge=new Uint16Array(NP);
 for(let i=0;i<NP;i++){ pEdge[i]=(Math.random()*aristas.length)|0; pT[i]=Math.random(); }
 const pGeo=new THREE.BufferGeometry();
 pGeo.setAttribute('position',new THREE.BufferAttribute(pPos,3));
 const puntos=new THREE.Points(pGeo,new THREE.PointsMaterial({color:0xffe6b3,size:0.9,transparent:true,
- opacity:0.7,depthWrite:false,blending:THREE.AdditiveBlending}));
+  opacity:0.7,depthWrite:false,blending:THREE.AdditiveBlending}));
 puntos.frustumCulled=false; scene.add(puntos);
 
-// ================= POSTPROCESADO / CONTROLES =================
-const renderPipeline=new THREE.RenderPipeline(renderer);
-const scenePass=pass(scene,camera);
-const scenePassColor=scenePass.getTextureNode('output');
-const bloomPass=bloom(scenePassColor,0.26,0.55,0.8);
-renderPipeline.outputNode=scenePassColor.add(bloomPass);
+/* controles */
 const controls=new OrbitControls(camera,renderer.domElement);
 controls.target.set(0,0,0);
-controls.enableDamping=true;controls.dampingFactor=0.06;
+controls.enableDamping=true; controls.dampingFactor=0.06;
 controls.enablePan=false;
-controls.autoRotate=!reducido;controls.autoRotateSpeed=0.35;
-controls.minDistance=40;controls.maxDistance=520;
-controls.maxPolarAngle=Math.PI*0.72;controls.minPolarAngle=Math.PI*0.18;
+controls.autoRotate=true; controls.autoRotateSpeed=0.35;
+controls.minDistance=40; controls.maxDistance=520;
+controls.maxPolarAngle=Math.PI*0.72; controls.minPolarAngle=Math.PI*0.18;
 controls.update();
 let idleTimer=null;
-canvas.addEventListener('pointerdown',()=>{ controls.autoRotate=false; if(idleTimer) clearTimeout(idleTimer); });
-canvas.addEventListener('pointerup',()=>{ if(idleTimer) clearTimeout(idleTimer);
-  if(!reducido) idleTimer=setTimeout(()=>controls.autoRotate=true,8000); });
+const cvs=renderer.domElement;
+cvs.addEventListener('pointerdown',()=>{ controls.autoRotate=false; if(idleTimer) clearTimeout(idleTimer); });
+cvs.addEventListener('pointerup',()=>{ if(idleTimer) clearTimeout(idleTimer);
+  idleTimer=setTimeout(()=>controls.autoRotate=true,8000); });
 
-// ================= INTERACCIÓN =================
-const ray=new THREE.Raycaster(),raton=new THREE.Vector2();
+/* interacción */
+const ray=new THREE.Raycaster(), raton=new THREE.Vector2();
 const detalleEl=document.getElementById('detalle');
 let movido=0;
 function pick(e){
@@ -360,73 +333,67 @@ function pick(e){
 }
 function mostrarDetalle(id){
   const n=NODOS[id];
-  document.getElementById('d-nombre').innerHTML=`<span class="dot" style="background:${n.color}"></span>${n.nombre}`;
+  document.getElementById('d-nombre').innerHTML='<span class="dot" style="background:'+n.color+'"></span>'+n.nombre;
   document.getElementById('d-desc').textContent=n.desc||'';
-  document.getElementById('d-meta').textContent=n.hijos.length?n.hijos.length+' SUBNODOS':'NODO FINAL';
+  document.getElementById('d-meta').textContent=(n.hijos.length?n.hijos.length+' SUBNODOS':'NODO FINAL');
   detalleEl.classList.remove('vis'); void detalleEl.offsetWidth; detalleEl.classList.add('vis');
 }
 document.getElementById('d-cerrar').onclick=()=>detalleEl.classList.remove('vis');
-canvas.addEventListener('pointermove',e=>{ movido+=Math.abs(e.movementX||0)+Math.abs(e.movementY||0); });
-canvas.addEventListener('pointerup',e=>{
+cvs.addEventListener('pointermove',e=>{ movido+=Math.abs(e.movementX||0)+Math.abs(e.movementY||0); });
+cvs.addEventListener('pointerdown',()=>{ movido=0; });
+cvs.addEventListener('pointerup',e=>{
   if(movido<8){ const id=pick(e); if(id) mostrarDetalle(id); else detalleEl.classList.remove('vis'); }
 });
-canvas.addEventListener('pointerdown',()=>{ movido=0; });
-
-// ================= HUD / MENSAJES =================
-function tickReloj(){ const f=new Date();
-  document.getElementById('reloj').textContent=String(f.getHours()).padStart(2,'0')+':'+String(f.getMinutes()).padStart(2,'0'); }
-tickReloj(); setInterval(tickReloj,15000);
 addEventListener('message',e=>{
   if(e.origin!==location.origin||!e.data) return;
   if(e.data.type==='nassar-descs'&&e.data.descs){
     for(const id in mallas){ const t=e.data.descs[mallas[id].userData.nombre];
-      if(t){ mallas[id].userData.desc=t; NODOS[id].desc=t; } }
+      if(t) NODOS[id].desc=t; }
   }
 });
 if(window.__nassarQ&&window.__nassarQ.length) window.__nassarQ.splice(0).forEach(()=>{});
 
-// ================= BUCLE =================
-function resize(){ camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight); }
+/* bucle */
+function resize(){ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); }
 addEventListener('resize',resize); resize();
 const clock=new THREE.Clock();
 const camStart=new THREE.Vector3(0,220,460);
-camera.position.copy(reducido?new THREE.Vector3(0,130,280):camStart);
-let introT=reducido?1:0,primerFrame=true;
+const camEnd=new THREE.Vector3(0,130,280);
+camera.position.copy(camStart);
+let introT=0, primerFrame=true;
 renderer.setAnimationLoop(()=>{
-  const dt=Math.min(clock.getDelta(),0.05),t=clock.elapsedTime;
+  const dt=Math.min(clock.getDelta(),0.05), t=clock.elapsedTime;
   if(introT<1){
     introT=Math.min(1,introT+dt/3.2);
     const k=easeInOutCubic(introT);
-    camera.position.lerpVectors(camStart,new THREE.Vector3(0,130,280),k);
+    camera.position.lerpVectors(camStart,camEnd,k);
     camera.lookAt(0,0,0);
-    if(introT>=1) controls.enabled=true;
-  } else if(!controls.enabled) controls.enabled=true;
+  }
   controls.update();
   for(const id of orden){
-    const m=mallas[id],u=m.userData;
+    const m=mallas[id], u=m.userData;
     const s=easeOutBack(clamp01((t-u.delay)/0.6));
     m.scale.setScalar(Math.max(0.0001,u.r*s));
-    if(!reducido){
-      m.position.set(POSA[id].x+Math.sin(t*0.7+u.fase)*0.3, POSA[id].y, POSA[id].z+Math.cos(t*0.55+u.fase)*0.3);
-    }
+    m.position.set(POSA[id].x+Math.sin(t*0.7+u.fase)*0.3,POSA[id].y,POSA[id].z+Math.cos(t*0.55+u.fase)*0.3);
+    u.halo.material.opacity=u.hop+Math.sin(t*1.3+u.fase)*0.04;
     u.halo.position.copy(m.position);
-    u.etiqueta.position.set(m.position.x, m.position.y+u.r+1.6, m.position.z);
+    u.etiqueta.position.set(m.position.x,m.position.y+u.r+1.6,m.position.z);
     u.etiqueta.material.opacity=clamp01((t-u.delay-0.3)/0.5);
   }
   for(let i=0;i<NP;i++){
     pT[i]+=dt*0.18;
     if(pT[i]>1){ pT[i]=0; pEdge[i]=(Math.random()*aristas.length)|0; }
-    const e=aristas[pEdge[i]],k=pT[i];
-    const pa=mallas[e.a].position,pb=mallas[e.b].position;
-    pPos[i*3]=pa.x+(pb.x-pa.x)*k;
-    pPos[i*3+1]=pa.y+(pb.y-pa.y)*k;
-    pPos[i*3+2]=pa.z+(pb.z-pa.z)*k;
+    const e=aristas[pEdge[i]], k=pT[i];
+    const pa=mallas[e[0]].position, pb=mallas[e[1]].position;
+    pPos[i*3]=pa.x+(pb.x-pa.x)*k; pPos[i*3+1]=pa.y+(pb.y-pa.y)*k; pPos[i*3+2]=pa.z+(pb.z-pa.z)*k;
   }
   pGeo.attributes.position.needsUpdate=true;
-  renderPipeline.render();
+  renderer.render(scene,camera);
   if(primerFrame){ primerFrame=false;
-    setTimeout(()=>{ document.getElementById('intro').style.opacity='0'; },350); }
+    setTimeout(()=>{ document.getElementById('intro').style.opacity='0'; },400); }
 });
+
+__ok=true;
 </script>
 </body>
 </html>
