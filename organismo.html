@@ -131,12 +131,6 @@ addEventListener('message',function(e){
   if(e.data&&e.data.type&&e.data.type.indexOf('nassar-')===0) window.__nassarQ.push(e.data);
 });
 </script>
-<script>
-window.__errs=[];
-function mostrarErr(){var d=document.getElementById('err3d');if(d){d.style.display='flex';d.innerHTML='<div style="font-size:12px;text-align:left">'+window.__errs.join('<br>')+'</div>';}}
-addEventListener('error',function(e){window.__errs.push('ERR: '+(e.message||e.type));mostrarErr();});
-addEventListener('unhandledrejection',function(e){window.__errs.push('REJ: '+((e.reason&&e.reason.message)||e.reason));mostrarErr();});
-</script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/OrbitControls.js';
