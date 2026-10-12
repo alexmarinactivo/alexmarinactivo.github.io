@@ -132,9 +132,9 @@ nav button.on{color:#1A1607;background:#FFD54F}
    <div class="tarjeta"><h2>ÚLTIMO COMPLETADO</h2><ul id="ultimo"></ul></div>
    <div id="refresco"></div><div id="error"></div>
   </div>
-  <div id="vista-cerebro" class="vista"><iframe id="f-cerebro" src="cerebro.html" title="Cerebro 3D"></iframe></div>
-  <div id="vista-organismo" class="vista"><iframe id="f-organismo" src="organismo.html" title="Cómo trabajo"></iframe></div>
- <div id="vista-avion" class="vista"><iframe id="f-avion" src="avion.html" title="Vista avión"></iframe></div>
+  <div id="vista-cerebro" class="vista"><iframe id="f-cerebro" data-src="cerebro.html" title="Cerebro 3D"></iframe></div>
+  <div id="vista-organismo" class="vista"><iframe id="f-organismo" data-src="organismo.html" title="Cómo trabajo"></iframe></div>
+ <div id="vista-avion" class="vista"><iframe id="f-avion" data-src="avion.html" title="Vista avión"></iframe></div>
  </main>
  <nav>
   <button id="b-vivo" class="on">◉ En vivo</button>
@@ -151,13 +151,19 @@ const $=id=>document.getElementById(id);
 const NOMBRE={en_curso:'EN CURSO',pendiente:'PENDIENTE',activo:'ACTIVO',hecho:'HECHO'};
 let ultimaOk=null, yaDentro=false;
 
+function cargaVista(v){
+ var fr=$('f-'+v); if(!fr) return;
+ if(!fr.getAttribute('src')){ fr.src=fr.getAttribute('data-src'); }
+ try{ fr.contentWindow.dispatchEvent(new Event('resize')); }catch(e){}
+}
 function ir(v){ // 'vivo' | 'cerebro' | 'organismo' | 'avion'
  ['vivo','cerebro','organismo','avion'].forEach(function(k){
   $('b-'+k).classList.toggle('on',v===k);
   $('vista-'+k).classList.toggle('on',v===k);
  });
- if(v!=='vivo'){ const fr=$('f-'+v);
-   if(fr){ try{ fr.contentWindow.dispatchEvent(new Event('resize')); }catch(e){} } }}
+ if(v!=='vivo') cargaVista(v);
+}
+cargaVista('cerebro');
 $('b-vivo').onclick=()=>ir('vivo'); $('b-cerebro').onclick=()=>ir('cerebro');
 $('b-organismo').onclick=()=>ir('organismo');
 $('b-avion').onclick=()=>ir('avion');
