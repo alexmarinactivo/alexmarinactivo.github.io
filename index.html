@@ -129,10 +129,12 @@ nav button.on{color:#FFD54F;background:rgba(255,213,79,.1)}
    <div id="refresco"></div><div id="error"></div>
   </div>
   <div id="vista-cerebro" class="vista"><iframe id="f-cerebro" src="cerebro.html" title="Cerebro 3D"></iframe></div>
+  <div id="vista-organismo" class="vista"><iframe id="f-organismo" src="organismo.html" title="Cómo trabajo"></iframe></div>
  </main>
  <nav>
   <button id="b-vivo" class="on">◉ En vivo</button>
   <button id="b-cerebro">✦ Cerebro 3D</button>
+  <button id="b-organismo">◈ Cómo trabajo</button>
  </nav>
  </div>
 </div>
@@ -143,15 +145,22 @@ const $=id=>document.getElementById(id);
 const NOMBRE={en_curso:'EN CURSO',pendiente:'PENDIENTE',activo:'ACTIVO',hecho:'HECHO'};
 let ultimaOk=null, yaDentro=false;
 
-function ir(vivo){$('b-vivo').classList.toggle('on',vivo);$('b-cerebro').classList.toggle('on',!vivo);
- $('vista-vivo').classList.toggle('on',vivo);$('vista-cerebro').classList.toggle('on',!vivo);
- if(!vivo){ const fr=$('f-cerebro'); try{ fr.contentWindow.dispatchEvent(new Event('resize')); }catch(e){} }}
-$('b-vivo').onclick=()=>ir(true); $('b-cerebro').onclick=()=>ir(false);
+function ir(v){ // 'vivo' | 'cerebro' | 'organismo'
+ $('b-vivo').classList.toggle('on',v==='vivo');
+ $('b-cerebro').classList.toggle('on',v==='cerebro');
+ $('b-organismo').classList.toggle('on',v==='organismo');
+ $('vista-vivo').classList.toggle('on',v==='vivo');
+ $('vista-cerebro').classList.toggle('on',v==='cerebro');
+ $('vista-organismo').classList.toggle('on',v==='organismo');
+ if(v!=='vivo'){ const fr=$('f-'+v);
+   if(fr){ try{ fr.contentWindow.dispatchEvent(new Event('resize')); }catch(e){} } }}
+$('b-vivo').onclick=()=>ir('vivo'); $('b-cerebro').onclick=()=>ir('cerebro');
+$('b-organismo').onclick=()=>ir('organismo');
 
 /* panel -> cerebro: tocar misión enfoca su nodo */
 $('misiones').addEventListener('click',e=>{
   const f=e.target.closest('.fila'); if(!f||!f.dataset.m) return;
-  ir(false);
+  ir('cerebro');
   const fr=$('f-cerebro');
   if(fr&&fr.contentWindow) fr.contentWindow.postMessage({type:'nassar-focus',mision:f.dataset.m},location.origin);
 });
@@ -159,7 +168,7 @@ $('misiones').addEventListener('click',e=>{
 addEventListener('message',e=>{
   if(e.origin!==location.origin||!e.data) return;
   if(e.data.type==='nassar-ver-mision'&&e.data.mision){
-    ir(true);
+    ir('vivo');
     const nom=String(e.data.mision).replace(/"/g,'');
     const f=document.querySelector('.fila[data-m="'+nom+'"]');
     if(f){ setTimeout(()=>{ f.scrollIntoView({block:'center',behavior:'smooth'});
