@@ -1,4 +1,4 @@
-const CACHE='nassar-v13';
+const CACHE='nassar-v14';
 const SHELL=['manifest.json','icon-192.png','icon-512.png','cerebro.html','organismo.html','nassar-crypto.js',
  'vendor/three.webgpu.js','vendor/three.core.js','vendor/three.tsl.js','avion.html',
  'vendor/fonts/inter-400.woff2','vendor/fonts/inter-600.woff2','vendor/fonts/inter-700.woff2',
