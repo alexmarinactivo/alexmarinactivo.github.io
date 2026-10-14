@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>J.A.R.V.I.S. — Nassar·OS</title>
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three.webgpu.js",
+    "three/webgpu": "./vendor/three.webgpu.js",
+    "three/tsl": "./vendor/three.tsl.js",
+    "three/addons/": "./vendor/addons/"
+  }
+}
+</script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;color:#bfefff;
+ font-family:'Kode Mono',ui-monospace,Menlo,monospace;-webkit-tap-highlight-color:transparent}
+#c{position:fixed;inset:0;display:block;touch-action:none}
+#vineta{position:fixed;inset:0;pointer-events:none;z-index:3;
+ background:radial-gradient(ellipse at 50% 45%,transparent 55%,rgba(0,20,40,.45) 100%)}
+.hud{position:fixed;z-index:10;pointer-events:none}
+#topbar{top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-start;padding:16px 20px}
+#titulo{font-size:17px;font-weight:600;letter-spacing:6px;color:#e8fbff}
+#titulo small{display:block;font-size:10px;letter-spacing:3px;color:#00e5ff;margin-top:5px;font-weight:400}
+#reloj{font-size:12px;letter-spacing:2px;color:#00e5ff;text-align:right}
+#reloj .punto{display:inline-block;width:8px;height:8px;border-radius:50%;background:#00e5ff;
+ margin-right:8px;animation:pulso 1.6s infinite}
+@keyframes pulso{0%{box-shadow:0 0 0 0 rgba(0,229,255,.6)}70%{box-shadow:0 0 0 9px rgba(0,229,255,0)}100%{box-shadow:0 0 0 0 rgba(0,229,255,0)}}
+#datos{right:20px;top:50%;transform:translateY(-50%);font-size:10.5px;letter-spacing:1.5px;
+ color:#4d9ec4;line-height:2.1;text-align:right}
+#datos b{color:#bfefff;font-weight:400}
+#ayuda{bottom:0;left:0;right:0;text-align:center;padding:16px;font-size:10.5px;letter-spacing:2.5px;color:#2a6a8a}
+#err3d{position:fixed;inset:0;display:none;align-items:center;justify-content:center;color:#bfefff;
+ font-size:14px;text-align:center;padding:30px;z-index:20;letter-spacing:1px}
+@media (max-width:760px){#datos{display:none}#titulo{font-size:14px;letter-spacing:4px}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="vineta"></div>
+<div class="hud" id="topbar">
+  <div id="titulo">J.A.R.V.I.S.<small>NASSAR·OS // HOLOGRAMA EN LÍNEA</small></div>
+  <div id="reloj"><span class="punto"></span><span id="hora">--:--:--</span></div>
+</div>
+<div class="hud" id="datos">
+  NÚCLEO <b id="d-nucleo">100%</b><br>
+  ANILLOS <b>4/4</b><br>
+  ARCOS <b id="d-arcos">3/3</b><br>
+  SENSORES <b>ACTIVOS</b>
+</div>
+<div class="hud" id="ayuda">ARRASTRA PARA GIRAR · PELLIZCA PARA ZOOM</div>
+<div id="err3d"></div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { pass } from 'three/tsl';
+import { bloom } from 'three/addons/BloomNode.js';
+
+const CIAN=0x00e5ff, AZUL=0x2979ff, BLANCO=0xeafcff;
+const canvas=document.getElementById('c');
+const reducido=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let renderer;
+try{
+  renderer=new THREE.WebGPURenderer({canvas,antialias:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;
+  await Promise.race([renderer.init(),new Promise((_,rej)=>setTimeout(()=>rej(new Error('gpu-timeout')),9000))]);
+}catch(e){
+  const d=document.getElementById('err3d');
+  d.style.display='flex';
+  d.innerHTML='<div>El holograma no arrancó aquí.<br><br><button id="btn-re" style="padding:12px 28px;border-radius:999px;border:0;background:#00e5ff;color:#00141c;font-weight:700;font-size:15px">Reintentar</button></div>';
+  document.getElementById('btn-re').onclick=()=>location.reload();
+  throw e;
+}
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x000000);
+scene.fog=new THREE.FogExp2(0x000000,0.004);
+const camera=new THREE.PerspectiveCamera(50,innerWidth/innerHeight,0.1,500);
+camera.position.set(0,16,52);
+camera.lookAt(0,1,0);
+
+// ---------- NÚCLEO ----------
+const nucleo=new THREE.Group();
+const corazon=new THREE.Mesh(new THREE.SphereGeometry(3.1,48,48),
+  new THREE.MeshBasicMaterial({color:BLANCO}));
+const manto=new THREE.Mesh(new THREE.SphereGeometry(3.9,48,48),
+  new THREE.MeshBasicMaterial({color:CIAN,transparent:true,opacity:0.28}));
+const red=new THREE.Mesh(new THREE.SphereGeometry(4.6,24,18),
+  new THREE.MeshBasicMaterial({color:AZUL,wireframe:true,transparent:true,opacity:0.35}));
+nucleo.add(corazon,manto,red);
+(function halo(){
+  const c=document.createElement('canvas');c.width=c.height=256;
+  const x=c.getContext('2d');
+  const g=x.createRadialGradient(128,128,10,128,128,128);
+  g.addColorStop(0,'rgba(180,245,255,0.9)');g.addColorStop(0.35,'rgba(0,229,255,0.35)');
+  g.addColorStop(1,'rgba(0,229,255,0)');
+  x.fillStyle=g;x.fillRect(0,0,256,256);
+  const t=new THREE.CanvasTexture(c);
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,
+    depthWrite:false,blending:THREE.AdditiveBlending}));
+  s.scale.set(26,26,1);nucleo.add(s);
+})();
+scene.add(nucleo);
+
+// ---------- ANILLOS ----------
+const giran=[];
+function anillo(r,tubo,color,op,vel,tilt){
+  const grp=new THREE.Group();
+  const m=new THREE.Mesh(new THREE.TorusGeometry(r,tubo,10,200),
+    new THREE.MeshBasicMaterial({color,transparent:true,opacity:op}));
+  m.rotation.x=Math.PI/2;
+  grp.add(m);grp.rotation.x=tilt||0;grp.userData.vel=vel;
+  scene.add(grp);giran.push(grp);return grp;
+}
+anillo(6.5,0.10,CIAN,0.95, 0.35,0);
+anillo(9.5,0.07,AZUL,0.80,-0.22,0.10);
+anillo(13, 0.06,CIAN,0.65, 0.15,-0.08);
+anillo(16, 0.05,AZUL,0.50,-0.10,0);
+
+// ---------- ARCOS DISCONTINUOS ----------
+function arco(r,a0,a1,color,vel){
+  const pts=new THREE.EllipseCurve(0,0,r,r,a0,a1).getPoints(140);
+  const g=new THREE.BufferGeometry().setFromPoints(pts);
+  const l=new THREE.Line(g,new THREE.LineDashedMaterial({color,dashSize:1.1,gapSize:0.7,
+    transparent:true,opacity:0.9}));
+  l.computeLineDistances();
+  const grp=new THREE.Group();grp.add(l);
+  l.rotation.x=-Math.PI/2;l.position.y=0.02;
+  grp.userData.vel=vel;scene.add(grp);giran.push(grp);return grp;
+}
+arco(7.8, 0.3, 2.4, CIAN, 0.5);
+arco(11.2, 2.8, 5.1, BLANCO,-0.35);
+arco(14.6, 4.4, 6.0, AZUL, 0.25);
+
+// ---------- MARCAS RADIALES ----------
+(function ticks(){
+  const p=[];
+  for(let i=0;i<72;i++){
+    const a=i/72*Math.PI*2, r1=17.4, r2=i%6===0?19.2:18.2;
+    p.push(Math.cos(a)*r1,0,Math.sin(a)*r1, Math.cos(a)*r2,0,Math.sin(a)*r2);
+  }
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));
+  const t=new THREE.LineSegments(g,new THREE.LineBasicMaterial({color:CIAN,transparent:true,opacity:0.5}));
+  const grp=new THREE.Group();grp.add(t);grp.userData.vel=0.06;
+  scene.add(grp);giran.push(grp);
+})();
+
+// ---------- CÍRCULOS PUNTEADOS ----------
+function puntosCirculo(r,n,color,size,op){
+  const pos=new Float32Array(n*3);
+  for(let i=0;i<n;i++){const a=i/n*Math.PI*2;
+    pos[i*3]=Math.cos(a)*r;pos[i*3+1]=0;pos[i*3+2]=Math.sin(a)*r;}
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  const pt=new THREE.Points(g,new THREE.PointsMaterial({color,size,transparent:true,
+    opacity:op,depthWrite:false,blending:THREE.AdditiveBlending}));
+  scene.add(pt);return pt;
+}
+puntosCirculo(5.2,90,CIAN,0.55,0.9);
+puntosCirculo(20.5,160,AZUL,0.5,0.55);
+
+// ---------- REJILLA DE PUNTOS ----------
+(function rejilla(){
+  const pos=[];
+  for(let r=4;r<=22;r+=2)
+    for(let i=0;i<36;i++){const a=i/36*Math.PI*2;
+      pos.push(Math.cos(a)*r,0,Math.sin(a)*r);}
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+  scene.add(new THREE.Points(g,new THREE.PointsMaterial({color:AZUL,size:0.28,
+    transparent:true,opacity:0.28,depthWrite:false,blending:THREE.AdditiveBlending})));
+})();
+
+// ---------- POSTPROCESADO (bloom) ----------
+const renderPipeline=new THREE.RenderPipeline(renderer);
+const scenePass=pass(scene,camera);
+const scenePassColor=scenePass.getTextureNode('output');
+const bloomPass=bloom(scenePassColor,0.55,0.6,0.55);
+renderPipeline.outputNode=scenePassColor.add(bloomPass);
+
+// ---------- CONTROLES ----------
+const controls=new OrbitControls(camera,renderer.domElement);
+controls.target.set(0,1,0);
+controls.enableDamping=true;controls.dampingFactor=0.06;
+controls.enablePan=false;
+controls.minDistance=24;controls.maxDistance=120;
+controls.maxPolarAngle=Math.PI*0.62;controls.minPolarAngle=Math.PI*0.2;
+if(!reducido){controls.autoRotate=true;controls.autoRotateSpeed=0.6;}
+controls.addEventListener('start',()=>{controls.autoRotate=false;});
+
+addEventListener('resize',()=>{
+  camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);
+});
+renderer.setSize(innerWidth,innerHeight);
+
+// ---------- RELOJ HUD ----------
+const horaEl=document.getElementById('hora');
+setInterval(()=>{horaEl.textContent=new Date().toLocaleTimeString('es-ES');},1000);
+
+// ---------- BUCLE ----------
+const clock=new THREE.Clock();
+renderer.setAnimationLoop(()=>{
+  const dt=Math.min(clock.getDelta(),0.05), t=clock.elapsedTime;
+  for(const g of giran) g.rotation.y+=dt*g.userData.vel;
+  const p=1+Math.sin(t*2.3)*0.05;
+  nucleo.scale.set(p,p,p);
+  manto.material.opacity=0.24+Math.sin(t*2.3)*0.08;
+  red.rotation.y-=dt*0.4;red.rotation.x+=dt*0.13;
+  controls.update();
+  renderPipeline.render();
+});
+</script>
+</body>
+</html>
