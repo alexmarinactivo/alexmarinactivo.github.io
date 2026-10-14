@@ -8,9 +8,16 @@
 {
   "imports": {
     "three": "./vendor/three.webgpu.js",
+    "three-classic": "./vendor/classic/three.module.js",
     "three/webgpu": "./vendor/three.webgpu.js",
     "three/tsl": "./vendor/three.tsl.js",
-    "three/addons/": "./vendor/addons/"
+    "three/addons/": "./vendor/addons/",
+    "three/addons-classic/": "./vendor/addons-classic/"
+  },
+  "scopes": {
+    "./vendor/addons-classic/": {
+      "three": "./vendor/classic/three.module.js"
+    }
   }
 }
 </script>
@@ -54,26 +61,36 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;color:#bfefff;
 <div class="hud" id="ayuda">ARRASTRA PARA GIRAR · PELLIZCA PARA ZOOM</div>
 <div id="err3d"></div>
 <script type="module">
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { pass } from 'three/tsl';
-import { bloom } from 'three/addons/BloomNode.js';
-
 const CIAN=0x00e5ff, AZUL=0x2979ff, BLANCO=0xeafcff;
 const canvas=document.getElementById('c');
 const reducido=matchMedia('(prefers-reduced-motion: reduce)').matches;
-let renderer;
+
+// ---------- MOTOR: WebGPU si hay, WebGL2 de respaldo ----------
+let THREE, OrbitControls, renderer, esWebGPU=false;
+const esperaMax=new Promise((_,rej)=>setTimeout(()=>rej(new Error('gpu-timeout')),9000));
 try{
-  renderer=new THREE.WebGPURenderer({canvas,antialias:true});
-  renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
-  renderer.toneMapping=THREE.ACESFilmicToneMapping;
-  await Promise.race([renderer.init(),new Promise((_,rej)=>setTimeout(()=>rej(new Error('gpu-timeout')),9000))]);
-}catch(e){
-  const d=document.getElementById('err3d');
-  d.style.display='flex';
-  d.innerHTML='<div>El holograma no arrancó aquí.<br><br><button id="btn-re" style="padding:12px 28px;border-radius:999px;border:0;background:#00e5ff;color:#00141c;font-weight:700;font-size:15px">Reintentar</button></div>';
-  document.getElementById('btn-re').onclick=()=>location.reload();
-  throw e;
+  THREE=await import('three');
+  const r=new THREE.WebGPURenderer({canvas,antialias:true});
+  r.setPixelRatio(Math.min(devicePixelRatio,1.5));
+  r.toneMapping=THREE.ACESFilmicToneMapping;
+  await Promise.race([r.init(),esperaMax]);
+  renderer=r; esWebGPU=true;
+  ({OrbitControls}=await import('three/addons/controls/OrbitControls.js'));
+}catch(e1){
+  try{
+    THREE=await import('three-classic');
+    const r=new THREE.WebGLRenderer({canvas,antialias:true});
+    r.setPixelRatio(Math.min(devicePixelRatio,1.5));
+    r.toneMapping=THREE.ACESFilmicToneMapping;
+    renderer=r; esWebGPU=false;
+    ({OrbitControls}=await import('three/addons-classic/controls/OrbitControls.js'));
+  }catch(e2){
+    const d=document.getElementById('err3d');
+    d.style.display='flex';
+    d.innerHTML='<div>El holograma no arrancó aquí.<br><br><button id="btn-re" style="padding:12px 28px;border-radius:999px;border:0;background:#00e5ff;color:#00141c;font-weight:700;font-size:15px">Reintentar</button></div>';
+    document.getElementById('btn-re').onclick=()=>location.reload();
+    throw e2;
+  }
 }
 
 const scene=new THREE.Scene();
@@ -176,12 +193,17 @@ puntosCirculo(20.5,160,AZUL,0.5,0.55);
     transparent:true,opacity:0.28,depthWrite:false,blending:THREE.AdditiveBlending})));
 })();
 
-// ---------- POSTPROCESADO (bloom) ----------
-const renderPipeline=new THREE.RenderPipeline(renderer);
-const scenePass=pass(scene,camera);
-const scenePassColor=scenePass.getTextureNode('output');
-const bloomPass=bloom(scenePassColor,0.55,0.6,0.55);
-renderPipeline.outputNode=scenePassColor.add(bloomPass);
+// ---------- POSTPROCESADO (bloom, solo WebGPU) ----------
+let renderPipeline=null;
+if(esWebGPU){
+  const {pass}=await import('three/tsl');
+  const {bloom}=await import('three/addons/BloomNode.js');
+  renderPipeline=new THREE.RenderPipeline(renderer);
+  const scenePass=pass(scene,camera);
+  const scenePassColor=scenePass.getTextureNode('output');
+  const bloomPass=bloom(scenePassColor,0.55,0.6,0.55);
+  renderPipeline.outputNode=scenePassColor.add(bloomPass);
+}
 
 // ---------- CONTROLES ----------
 const controls=new OrbitControls(camera,renderer.domElement);
@@ -213,7 +235,8 @@ renderer.setAnimationLoop(()=>{
   manto.material.opacity=0.24+Math.sin(t*2.3)*0.08;
   red.rotation.y-=dt*0.4;red.rotation.x+=dt*0.13;
   controls.update();
-  renderPipeline.render();
+  if(renderPipeline) renderPipeline.render();
+  else renderer.render(scene,camera);
 });
 </script>
 </body>
