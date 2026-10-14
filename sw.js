@@ -1,9 +1,9 @@
-const CACHE='nassar-v26';
+const CACHE='nassar-v27';
 const SHELL=['manifest.json','icon-192.png','icon-512.png','cerebro.html','organismo.html','nassar-crypto.js',
  'vendor/three.webgpu.js','vendor/three.core.js','vendor/three.tsl.js','avion.html',
  'vendor/fonts/inter-400.woff2','vendor/fonts/inter-600.woff2','vendor/fonts/inter-700.woff2',
  'vendor/fonts/instrument-serif-400.woff2','vendor/fonts/kode-mono-400.woff2','vendor/fonts/kode-mono-600.woff2',
- 'vendor/addons/OrbitControls.js','vendor/addons/BloomNode.js',
+ 'vendor/addons/OrbitControls.js','vendor/addons/BloomNode.js','jarvis.html',
  'https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.js',
  'https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.core.js',
  'https://cdn.jsdelivr.net/npm/three@0.186.0/examples/jsm/controls/OrbitControls.js'];
