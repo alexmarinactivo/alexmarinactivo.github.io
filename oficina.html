@@ -1,4 +1,4 @@
-<!-- OFICINA v6.2 WORKERS-3D 2026-10-15 -->
+<!-- OFICINA v6.3 MUROS-SOLIDOS+MADERA 2026-10-15 -->
 <div style="box-sizing:border-box;max-width:100%;font-family:-apple-system,system-ui,sans-serif;color:var(--hatch-widget-text);position:relative;">
 <div style="font-size:12px;font-weight:800;letter-spacing:.08em;color:var(--hatch-widget-muted);padding:4px 2px;">LA OFICINA · 3D real · arrastra para girar · pellizca para zoom · toca salas y personas</div>
 <div style="display:flex;gap:8px;padding:2px 2px 8px;">
@@ -218,11 +218,14 @@ const GLASS_MAT=new THREE.ShaderMaterial({
  fragmentShader:'uniform vec3 tint;uniform vec3 edge;uniform float base;uniform float power;varying vec3 vN;varying vec3 vV;void main(){float f=pow(1.0-abs(dot(normalize(vN),normalize(vV))),power);vec3 col=mix(tint,edge,f);gl_FragColor=vec4(col,clamp(base+f*0.55,0.0,0.72));}',
  transparent:true,depthWrite:false,side:THREE.DoubleSide
 });
+const WALL_MAT=new THREE.MeshStandardMaterial({color:0xe9e4d8,roughness:0.92,metalness:0,side:THREE.DoubleSide});
+const WOOD_TEX=(function(){const cv=document.createElement('canvas');cv.width=cv.height=512;const g=cv.getContext('2d');g.fillStyle='#9c6d42';g.fillRect(0,0,512,512);const rows=6,rh=512/rows;for(let r=0;r<rows;r++){const y=r*rh,sh=0.9+Math.random()*0.2;g.fillStyle='rgb('+(156*sh|0)+','+(109*sh|0)+','+(66*sh|0)+')';g.fillRect(0,y,512,rh);g.strokeStyle='rgba(80,50,26,0.28)';g.lineWidth=1;for(let i=0;i<7;i++){const gy=y+4+Math.random()*(rh-8);g.beginPath();g.moveTo(0,gy);g.bezierCurveTo(150,gy+(Math.random()*10-5),340,gy+(Math.random()*10-5),512,gy);g.stroke();}g.fillStyle='rgba(52,32,16,0.6)';g.fillRect(0,y,512,2.5);const jx=(r*211+97)%512;g.fillRect(jx,y,2.5,rh);}const t=new THREE.CanvasTexture(cv);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.encoding=THREE.sRGBEncoding;t.anisotropy=4;return t;})();
+function woodMat(w,d){const t=WOOD_TEX.clone();t.needsUpdate=true;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(Math.max(1,Math.round(w/2.5)),Math.max(1,Math.round(d/2.5)));return new THREE.MeshStandardMaterial({map:t,roughness:0.65,metalness:0.04});}
 const FRAME_MAT=stdMat(K.frame,0.4,0.3);
 function makeGlassPanel(x,z,len,h,ry){
  const g=new THREE.Group();h=h||1.6;
- const pane=new THREE.Mesh(geo('gp'+len+'_'+h,function(){return new THREE.PlaneGeometry(len,h);}),GLASS_MAT);
- pane.position.y=h/2;pane.renderOrder=2;g.add(pane);
+ const pane=new THREE.Mesh(geo('gp'+len+'_'+h,function(){return new THREE.PlaneGeometry(len,h);}),WALL_MAT);
+ pane.position.y=h/2;g.add(pane);
  const top=new THREE.Mesh(geo('gt'+len,function(){return new THREE.BoxGeometry(len,0.04,0.045);}),FRAME_MAT);
  top.position.y=h;g.add(top);
  const bot=top.clone();bot.position.y=0.02;g.add(bot);
@@ -244,7 +247,7 @@ function addMiniPlant(parent,x,y,z,s){
  const g=model('plantS',MS*(s||1));g.position.set(x,y,z);g.rotation.y=Math.random()*6.283;parent.add(g);return g;
 }
 function makeFloorTile(x,z,w,d){
- const m=new THREE.Mesh(geo('ft'+w+'_'+d,function(){return new THREE.BoxGeometry(w,0.06,d);}),stdMat(0xf8f8f7,0.35,0.05));
+ const m=new THREE.Mesh(geo('ft'+w+'_'+d,function(){return new THREE.BoxGeometry(w,0.06,d);}),woodMat(w,d));
  m.position.set(x,-0.03,z);m.receiveShadow=true;scene.add(m);
  if(w>1.6&&d>1.6){
   const ix=w/2-0.35,iz=d/2-0.35;
@@ -586,7 +589,7 @@ const ACCENT_MAT=basicMat(K.cyan);
 const labels=[];
 /* suelo sin plantas automáticas (las salas de departamento ponen las suyas vía furnishRoom) */
 function bareFloorTile(x,z,w,d){
- const m=new THREE.Mesh(geo('ft'+w+'_'+d,function(){return new THREE.BoxGeometry(w,0.06,d);}),stdMat(0xf8f8f7,0.35,0.05));
+ const m=new THREE.Mesh(geo('ft'+w+'_'+d,function(){return new THREE.BoxGeometry(w,0.06,d);}),woodMat(w,d));
  m.position.set(x,-0.03,z);m.receiveShadow=true;scene.add(m);return m;
 }
 rooms.forEach(function(R){
